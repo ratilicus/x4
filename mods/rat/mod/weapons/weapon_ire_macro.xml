@@ -1,0 +1,18 @@
+<?xml version='1.0' encoding='utf-8'?>
+<macros>
+  <macro class="weapon" name="weapon_ire_macro">
+    <component ref="weapon_ire" />
+    <properties>
+      <identification basename="{20105, 10001}" description="{20105, 10003}" mk="1" name="{20105, 10000}" shortname="{20105, 10002}" />
+      <bullet class="bullet_ire_macro" />
+      <heat cooldelay="1.13" coolrate="2000" overheat="10000" reenable="9500" />
+      <rotationspeed max="165.4" />
+      <rotationacceleration max="82.7" />
+      <reload />
+      <hull hittable="0" max="500" />
+      <effects>
+        <firing start="startshooting_gen_s_laser_01_mk1" stop="stopshooting_gen_s_laser_01_mk1" />
+      </effects>
+    </properties>
+  </macro>
+</macros>

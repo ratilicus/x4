@@ -1,0 +1,34 @@
+#!/usr/bin/python3
+
+import os
+import sys
+import os.path
+import csv
+import xml.etree.ElementTree as ET
+from x4lib import get_macros, get_components, get_wares, read_xml, write_xml, set_xml
+from pack_x4 import pack
+
+"""
+Pack mods/{mod name}/* mod files into {game dir}/extensions/{mod name}/* (cat+dat)
+Use: python3 pack_mod.py {mod name}
+"""
+
+try:
+    import config
+except ImportError:
+    print('config.py not found, please run setup.sh before using this script!')
+    exit(1)
+
+
+if __name__ == '__main__':
+    args = sys.argv[1:]
+    if len(args) < 1:
+        print("%s <mod_name>" % sys.argv[0])
+    else:
+        mod_name = args[0]
+        src = '{}/{}/'.format(config.MODS, mod_name)
+        dst = '{}/extensions/{}/'.format(config.X4, mod_name)
+        pack(src, dst)
+
+
+

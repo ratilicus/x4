@@ -1,0 +1,8 @@
+<?xml version='1.0' encoding='utf-8'?>
+<diff>
+<add sel="/index">
+<entry name="weapon_ire" value="extensions/rat/mod/weapons/weapon_ire" />
+<entry name="weapon_pac" value="extensions/rat/mod/weapons/weapon_pac" />
+<entry name="ship_pegasus" value="extensions/rat/mod/ships/ship_pegasus" />
+</add>
+</diff>

@@ -1,0 +1,199 @@
+# modding ships
+assets/units/size_(xs|s|m|l|xl)/ship_(gen|arg|tel|par|xen|kha)_*.xml  # ship base class definitions
+			<connection name="con_engine_01" tags="engine small platformcollision ">
+			<connection name="con_shield_01" tags="small shield unhittable ">
+			<connection name="con_shipstorage_m_01" tags="dockingbay ">  # size_m dock
+			<connection name="con_shipstorage_s_01" tags="dockingbay ">  # size_s dock
+
+			<connection name="con_weapon_01" tags="weapon small standard missile mining platformcollision ">
+			<connection name="con_turret_07" group="group_front_top_right " tags="turret medium standard missile hittable ">
+			<connection name="con_weapon_01" tags="weapon standard large par_destroyer_01 ">
+                weapon|turret
+                small|medium|large
+                standard = allow regular weapons lasers, etc
+                missile = allow missile
+                mining = allow mining laser
+
+
+assets/units/size_(xs|s|m|l|xl)/macros/ship_(gen|arg|tel|par|xen|kha)_*_macro.xml  # ship variants
+      <identification name="{20101,30102}" basename="{20101,30101}" description="{20101,30112}" variation="{20111,1101}" shortvariation="{20111,1103}" icon="ship_s_fight_01" />
+      <software>
+      <storage missile="20" />
+      <hull max="1300" />
+      <secrecy level="2" />
+      <purpose primary="fight" />
+      <people capacity="2" />
+      <physics mass="5.765">  # speed/manouverability/cruise speed
+        <inertia pitch="0.855" yaw="0.855" roll="0.684" />
+        <drag forward="3.255" reverse="7.64" horizontal="4.09" vertical="4.09" pitch="3.208" yaw="3.208" roll="3.208" />
+      </physics>
+      <thruster tags="small" />
+      <ship type="scout" />
+      <connection ref="con_storage01"><macro ref="storage_par_s_scout_01_a_macro" connection="ShipConnection" />  # link to cargo
+
+
+assets/units/size_(xs|s|m|l|xl)/macros/storage_(gen|arg|tel|par|xen|kha)_*_macro.xml  # ship cargo space
+      <identification makerrace="paranid" />
+      <cargo max="440" tags="container" />
+      <cargo max="4800" tags="liquid" />
+      <cargo max="5400" tags="solid" />
+
+
+
+# modding weapons
+assets/props/WeaponSystems/(energy|...)/(weapon|turret|missile)*.xml
+			<connection name="WeaponCon_01" tags="component weapon medium standard ">  # tags?
+
+
+assets/props/WeaponSystems/(energy|...)/macros/*_macro.xml
+      <identification name="{20105,1184}" basename="{20105,1181}" shortname="{20105,1185}" description="{20105,1182}" mk="1" />
+      <bullet class="bullet_arg_s_ion_01_mk1_macro" />  # link to bullet
+      <heat overheat="10000" cooldelay="1.13" coolrate="2000" reenable="9500" />
+      <rotationspeed max="109.6" />
+      <rotationacceleration max="54.8" />
+      <reload time="4" />
+      <damage hull="2" repair="1" />  # repair laser
+      <hull max="500" hittable="0" />
+
+
+assets/fx/weaponFx/macros/bullet_*_macro.xml
+      <bullet speed="1920" lifetime="1.5" amount="1" barrelamount="1" icon="weapon_ion_mk1" timediff="0.021" angle="0.21" maxhits="1" ricochet="0" scale="0" attach="0" />
+      <heat value="122" />
+      <reload rate="5" />
+      <damage value="10" shield="72" repair="0" />
+      <effects>
+        <impact ref="impact_arg_s_ion_01_mk1" />
+        <launch ref="muzzle_arg_s_ion_01_mk1" />
+      </effects>
+      <weapon system="weapon_standard" />
+      <weapon system="weapon_repair" />
+
+
+# modding map
+maps/XU_ep2_universe/galaxy.xml
+      <connection name="Cluster_02_connection" ref="clusters">
+        <offset>
+          <position x="15000000" y="0" z="25980000" />
+        </offset>
+        <macro ref="Cluster_02_macro" connection="galaxy" />
+      </connection>
+
+
+maps/XU_ep2_universe/clusters.xml
+  <macro name="Cluster_01_macro" class="cluster">
+      <connection name="Cluster_01_Sector002_connection" ref="sectors">
+        <offset>
+          <position x="-21113958" y="0" z="7381814.5" />
+        </offset>
+        <macro ref="Cluster_01_Sector002_macro" connection="cluster" />
+      </connection>
+
+
+maps/XU_ep2_universe/sectors.xml
+  <macro name="Cluster_01_Sector001_macro" class="sector">
+    <connections>
+      <connection name="tzoneCluster_01_Sector001SHCon5_GateZone_connection" ref="zones">
+        <offset>
+          <position x="39898.99609375" y="0" z="200000" />
+        </offset>
+        <macro ref="tzoneCluster_01_Sector001SHCon5_GateZone_macro" connection="sector" />
+      </connection>
+
+
+maps/XU_ep2_universe/zones.xml
+  <macro name="tzoneCluster_01_Sector001SHCon5_GateZone_macro" class="zone">
+    <connections>
+      <connection ref="SHCon5_gate" />
+    </connections>
+  </macro>
+
+
+libraries/mapdefaults.xml
+  <dataset macro="Cluster_03_macro">
+    <properties>
+      <identification name="{20003,30001}" description="{20003,30002}" system="3" />
+      <sounds>
+        <music ref="music_cluster_03" />
+      </sounds>
+      <area sunlight="1" economy="0.5" security="0.25" />
+    </properties>
+  </dataset>
+
+
+md/initUniverse.xml  # script to init universe by looping from sectors down 
+
+
+libraries/ships.xml  # list of all ship types
+  <!-- Argon Federation -->
+  <ship id="argon_builder_xl" group="arg_builder_xl">
+    <category tags="[builder, mission]" faction="[argon, scaleplate, hatikvah, alliance]" size="ship_xl"/>
+    <pilot>
+      <select faction="argon" tags="traderpilot"/>
+    </pilot>
+    <drop ref="ship_large_civilian"/>
+    <!--TODO @Owen #EntityTypes Implement a people defaults so we don't have to copy and paste the same stuff into every definition. Ship::Defaults?-->
+    <people ref="argon_freighter_crew"/>
+  </ship>
+
+
+libraries/shipgroups.xml  # ship groups
+  <!--    ARGON FEDERATION -->
+  <group name="arg_builder_xl">
+    <select macro="ship_arg_xl_builder_01_a_macro"/>
+  </group>
+
+
+libraries/stations.xml  # station types
+  <station id="equipmentdock_arg" group="equipmentdock_arg">
+    <category tags="equipmentdock" faction="[argon, antigone, hatikvah]" />
+  </station>
+
+
+libraries/stationgroups.xml  # 
+  <group name="shipyard_arg">
+    <select constructionplan="arg_shipyard" />
+  </group>
+
+
+libraries/god.xml  # static/hardcoded objects/stations/etc and factory generation specs
+  <objects>
+    <object id="scaleplategreen_anomaly_01">
+      <quotas>
+        <quota galaxy="1" />
+      </quotas>
+      <location class="zone" macro="zone001_cluster_21_sector001_macro" />
+      <position x="12651" y="57" z="-42389" />
+      <object macro="wormhole_v1_macro" />
+    </object>
+
+  <stations>
+    <station id="tradestation_argon_01" race="argon" owner="argon" type="tradingstation">
+      <quotas>
+        <quota galaxy="1" zone="1" />
+      </quotas>
+      <location class="zone" macro="zone004_cluster_06_sector002_macro" />
+      <station>
+        <select faction="argon" tags="[tradestation]" />
+        <loadout>
+          <level exact="0.75" />
+        </loadout>
+      </station>
+    </station>
+
+  <products>
+    <!-- Argon Economy -->
+    <product id="arg_advancedcomposites" ware="advancedcomposites" owner="argon" type="factory">
+      <quotas>
+        <quota galaxy="2" />
+      </quotas>
+      <location class="galaxy" macro="xu_ep2_universe_macro" faction="[argon, hatikvah]" relation="self" comparison="ge">
+        <economy max="0.75" maxbound="false" />
+      </location>
+      <module>
+        <select ware="advancedcomposites" race="argon" faction="argon"/>
+      </module>
+    </product>
+
+
+
+

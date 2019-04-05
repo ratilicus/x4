@@ -1,0 +1,8 @@
+*.pyc
+src*
+env
+game
+.idea
+config.py
+docker-compose.yml
+
