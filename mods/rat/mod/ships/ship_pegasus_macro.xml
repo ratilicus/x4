@@ -1,0 +1,47 @@
+<?xml version='1.0' encoding='utf-8'?>
+<macros>
+  <macro class="ship_s" name="ship_pegasus_macro">
+    <component ref="ship_pegasus" />
+    <properties>
+      <identification basename="{20101, 100001}" description="{20101, 100002}" icon="ship_s_fight_01" name="{20101, 100000}" shortvariation="{20101, 100004}" variation="{20101, 100003}" />
+      <software>
+        <software compatible="1" ware="software_dockmk2" />
+        <software default="1" ware="software_flightassistmk1" />
+        <software default="1" ware="software_scannerlongrangemk2" />
+        <software default="1" ware="software_scannerobjectmk1" />
+        <software compatible="1" ware="software_scannerobjectmk2" />
+        <software compatible="1" ware="software_targetmk1" />
+        <software compatible="1" ware="software_trademk1" />
+      </software>
+      <storage missile="20" />
+      <hull max="1300" />
+      <secrecy level="2" />
+      <purpose primary="fight" />
+      <people capacity="2" />
+      <sounds>
+        <shipdetail ref="shipdetail_ship_02" />
+      </sounds>
+      <physics mass="5.765">
+        <inertia pitch="0.855" roll="0.684" yaw="0.855" />
+        <drag forward="3.255" horizontal="4.09" pitch="3.208" reverse="7.64" roll="3.208" vertical="4.09" yaw="3.208" />
+      </physics>
+      <thruster tags="small" />
+      <ship type="scout" />
+      <sound_occlusion inside="0.5" />
+    </properties>
+    <connections>
+      <connection ref="con_cockpit">
+        <macro connection="ship" ref="cockpit_gen_virtual_01_macro" />
+      </connection>
+      <connection ref="con_dock_xs">
+        <macro connection="Connection_component" ref="dock_gen_xs_ship_01_macro" />
+      </connection>
+      <connection ref="con_shipstorage_xs_01">
+        <macro connection="object" ref="shipstorage_gen_xs_01_macro" />
+      </connection>
+      <connection ref="con_storage01">
+        <macro connection="ShipConnection" ref="storage_par_s_scout_01_a_macro" />
+      </connection>
+    </connections>
+  </macro>
+</macros>
