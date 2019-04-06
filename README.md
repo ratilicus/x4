@@ -1,10 +1,48 @@
 # X4 Foundations modding
 
+###### Development setup
+
 Written and tested in the following environment
 OS:Written on Ubuntu 16.04
 PWD: ~/x4
 GAME DIR ~/.steam/.local/share/Steam/steamapps/common/X4 Foundations
 PYTHON3 VERSION: 3.5.2
+
+
+###### How to mod
+
+Ships, weapons, etc are based on multiple different types of files.
+- components define the parts of the object (ex ship has hardpoints for shields, weapons, engines, 
+spacesuit docking, cockpit, etc)
+- macros define the different configurations/variations of the components
+- wares file defines where the ware is available, what price, what is needed to produce it, etc
+- t files define the names and labels for the different texts
+
+Example
+- component: assets/unit/size_s/ship_par_s_scout_01.xml defines Paranid Pegasus ship
+    - connection: con_weapon_01 defines the main weapon, it's position, and the weapon compatibility tags for it
+    - connection: con_shield_01 defines the main shield, it's position, and the compatibility tags
+    
+- macro: assets/unit/size_s/macros/ship_par_s_scout_01_a_macro.xml defines the Pegasus Vanguard variation
+    - identification: references the t file, the ship name, etc
+    - component ref: links to the ship component
+    - physics: affects the ship speed and flight characteristics
+- macro: ship_par_s_scout_01_b_macro.xml defines the Pegause Sentinel variation
+
+- wares: libraries/wares.xml ware id="ship_par_s_scout_01_a" defines the Pegasus Vanguard ware
+    - price: prices min/avg/max price
+    - production: production time and costs/materials needed
+    - component ref: links to the ship macro
+    - restriction: sets what license you need to buy the ware
+    - owner entries: define where (at which factions) the ware can be built/bought
+
+
+The compile_mod.py script looks at the mods/{mod name}/weapons.csv and mods/{mod name}/ships.csv files.
+And based on the base_ship_macro/base_weapon_macro, it finds the macro file, copies it to the mods/{mod name}/mod/ dir,
+updating the macro and component values with the ones in the csv file. 
+
+
+###### Modding Steps
 
 Step 1: Create config.py
 run ./setup.sh
@@ -44,3 +82,15 @@ Note: if you add a ship or ware, it might not be in the Wharf/Shipyard you are d
 faction where it's available (this can be controlled in the libraries/wares.xml)
 
 
+###### Current Features
+- auto path configuration via setup.sh
+- extracting scripts and/or all files from game files via extract_x4.py
+- packing mod files into cat/dat via pack_x4.py or pack_mod.py
+- compiling mod from csv files via compile_mod.py
+- adding ships
+- adding weapons
+
+###### Roadmap
+
+- add adding shields and other components
+- searching for base templates
