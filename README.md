@@ -95,9 +95,24 @@ faction where it's available (this can be controlled in the libraries/wares.xml)
 
 - add adding shields and other components
 - searching for base templates
+- add proper error handling and validation
+- add complete unit test set
+- add integration tests
 
 
 ###### Testing
 - setup virtualenv (python3)
 - pip install -r requirements.txt
 - python3 tests.py
+
+
+###### rat mode
+- testing adding weapons, ships - confirmed
+- testing weapon tags (to see if tags can be used to restrict specific ship weapon mounts to specific weapon types) - confirmed
+- added IRE, PAC weapons
+- added Pegasus Xtra
+    - added 2 wing based weapons
+    - changed the weapon flags on primary weapon to allow missile, ire, and pac
+    - wing weapons can only mount ire
+
+

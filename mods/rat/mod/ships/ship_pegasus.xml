@@ -1871,19 +1871,19 @@
 					<quaternion qw="-0.9914448" qx="-0.1305262" qy="4.489394E-08" qz="6.117379E-09" />
 				</offset>
 			</connection>
-			<connection name="con_weapon_01" tags="weapon small standard missile platformcollision ">
+			<connection name="con_weapon_01" tags="weapon small missile pac ire platformcollision ">
 				<offset>
 					<position x="6.508082E-05" y="-1.916817" z="9.752577" />
 				</offset>
 			</connection>
 
-			<connection name="con_weapon_02" tags="weapon small standard missile platformcollision ">
+			<connection name="con_weapon_02" tags="weapon small ire platformcollision ">
 				<offset>
 					<position x="-12.00" y="-1.916817" z="-3.00" />
 				</offset>
 			</connection>
 
-			<connection name="con_weapon_03" tags="weapon small standard missile platformcollision ">
+			<connection name="con_weapon_03" tags="weapon small ire platformcollision ">
 				<offset>
 					<position x="12.00" y="-1.916817" z="-3.00" />
 				</offset>
