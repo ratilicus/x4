@@ -1,17 +1,17 @@
-# x4
-X4 Foundations modding
+# X4 Foundations modding
 
-Written on Ubuntu 16.04
-
+Written and tested in the following environment
+OS:Written on Ubuntu 16.04
 PWD: ~/x4
 GAME DIR ~/.steam/.local/share/Steam/steamapps/common/X4 Foundations
+PYTHON3 VERSION: 3.5.2
 
 Step 1: Create config.py
 run ./setup.sh
 (this should create a config.py with paths for present dir, game dir, src dir, mods dir)
 
 Step 2: extract X4 scripts
-run python extract_x4.py --extract
+run python3 extract_x4.py --extract
 (this should extract all the scripts/xml from the game cats+dats into src/ dir)
 
 Step 3: make modifications

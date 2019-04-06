@@ -5,6 +5,7 @@ import sys
 import os.path
 import csv
 import xml.etree.ElementTree as ET
+from copy import deepcopy
 from x4lib import get_macros, get_components, get_wares, read_xml, write_xml, set_xml
 
 """
@@ -155,7 +156,8 @@ def compile_weapons(mod, rel_path='/mod/weapons/'):
                                'extensions/{}{}{}'.format(mod.mod_name, rel_path, row['bullet_macro_id'])))
 
         ware = mod.old_wares and mod.old_wares.find('./add/ware[@id="{}"]'.format(row['ware_component_id']))
-        ware = ware or mod.src_wares.find('./ware[@id="{}"]'.format(row['base_weapon_macro'][:-6]))
+        if ware is None:
+            ware = deepcopy(mod.src_wares.find('./ware[@id="{}"]'.format(row['base_weapon_macro'][:-6])))
         for path, key, value_template in WARE_MAPPINGS:
             set_xml(ware, path, key, value_template, row, label='weapon_macro')
         mod.mod_wares.append(ware)
@@ -214,7 +216,8 @@ def compile_ships(mod, rel_path='/mod/ships/'):
                                'extensions/{}{}{}'.format(mod.mod_name, rel_path, row['ship_macro_id'])))
 
         ware = mod.old_wares and mod.old_wares.find('./add/ware[@id="{}"]'.format(row['ware_component_id']))
-        ware = ware or mod.src_wares.find('./ware[@id="{}"]'.format(row['base_ship_macro'][:-6]))
+        if ware is None:
+            ware = deepcopy(mod.src_wares.find('./ware[@id="{}"]'.format(row['base_ship_macro'][:-6])))
         for path, key, value_template in WARE_MAPPINGS:
             set_xml(ware, path, key, value_template, row, label='ship_macro')
         mod.mod_wares.append(ware)

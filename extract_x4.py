@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 
 import os
 import sys
@@ -13,7 +13,7 @@ Use: python extract_x4.py --extract
 try:
     import config
 except ImportError:
-    print 'config.py not found, please run setup.sh before using this script!'
+    print('config.py not found, please run setup.sh before using this script!')
     exit(1)
 
 
@@ -41,7 +41,7 @@ class CatParser(object):
             out_filename, out_size, _, _ = line.rsplit(' ', 3)
             out_size = int(out_size)
         except ValueError as e:
-            print 'X', e, line
+            print('parse line error', e, line)
             raise
         return out_filename, out_size
 
@@ -61,7 +61,7 @@ class CatParser(object):
         :return: yields (filename, offset, size)
         """
         offset = 0
-        with open(cat_filename, "rb") as cat_file:
+        with open(cat_filename, "r") as cat_file:
             for line in cat_file:
                 filename, size = self.parse_line(line)
                 yield filename, offset, size
@@ -77,7 +77,7 @@ class CatParser(object):
         files_iter = self.cat_files_iterator(cat_filename)
         for filename, offset, size in files_iter:
             if scripts_only and self.is_script_file(filename):
-                print '%60s (%10d)' % (filename, size)
+                print('%60s (%10d)' % (filename, size))
 
     def extract_files(self, cat_filename, out_path, scripts_only=True):
         """
@@ -102,11 +102,11 @@ class CatParser(object):
                     if self.is_script_file(filename):
                         out_file_path = '{}/{}'.format(out_path, filename)
                         self.extract_file(dat_file, out_file_path, offset, size)
-                        print cat_filename, out_file_path
+                        print(cat_filename, out_file_path)
                 else:
                     out_file_path = '{}/{}'.format(out_path, filename)
                     self.extract_file(dat_file, out_file_path, offset, size)
-                    print cat_filename, out_file_path
+                    print(cat_filename, out_file_path)
 
     def extract_file(self, dat_file, out_file_path, offset, size):
         """
@@ -155,4 +155,4 @@ if __name__ == '__main__':
             extract=True,
             scripts_only=False,
         )
-        
+

@@ -1,11 +1,6 @@
 #!/usr/bin/python3
 
-import os
 import sys
-import os.path
-import csv
-import xml.etree.ElementTree as ET
-from x4lib import get_macros, get_components, get_wares, read_xml, write_xml, set_xml
 from pack_x4 import pack
 
 """

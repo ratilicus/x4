@@ -1,6 +1,7 @@
 *.pyc
 src*
 env
+venv
 game
 .idea
 config.py
