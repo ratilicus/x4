@@ -1,14 +1,13 @@
 #!/usr/bin/python3
 
-import os
-import sys
-import os.path
-
 """
 Extract xml scripts into source dir
 Use: python extract_x4.py --extract
 """
 
+import os
+import sys
+import os.path
 
 try:
     import config
@@ -19,15 +18,6 @@ except ImportError:
 
 class CatParser(object):
     SCRIPTS_EXT = ('.xml', '.xsd', '.xsl', '.dtd', '.lua')
-
-    @staticmethod
-    def make_file_path(file_with_path):
-        # in python 3 this can go away since it has a parameter to ignore path exists errors
-        path = file_with_path.rsplit('/', 1)[0]
-        try:
-            os.makedirs(path)
-        except OSError as error:
-            pass
 
     @staticmethod
     def parse_line(line):
@@ -128,7 +118,7 @@ class CatParser(object):
         :param data:
         :return:
         """
-        self.make_file_path(out_file_path)
+        os.makedirs(out_file_path.rsplit('/', 1)[0], exist_ok=True)
         with open(out_file_path, 'wb') as out_file:
             out_file.write(data)
 

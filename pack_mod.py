@@ -1,12 +1,12 @@
 #!/usr/bin/python3
 
-import sys
-from pack_x4 import pack
-
 """
 Pack mods/{mod name}/* mod files into {game dir}/extensions/{mod name}/* (cat+dat)
 Use: python3 pack_mod.py {mod name}
 """
+
+import sys
+from pack_x4 import pack
 
 try:
     import config
@@ -21,9 +21,8 @@ if __name__ == '__main__':
         print("%s <mod_name>" % sys.argv[0])
     else:
         mod_name = args[0]
-        src = '{}/{}/'.format(config.MODS, mod_name)
-        dst = '{}/extensions/{}/'.format(config.X4, mod_name)
-        pack(src, dst)
+        pack(src='{}/{}/'.format(config.MODS, mod_name),
+             dst='{}/extensions/{}/'.format(config.X4, mod_name))
 
 
 

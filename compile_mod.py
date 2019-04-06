@@ -1,5 +1,10 @@
 #!/usr/bin/python3
 
+"""
+Compile mods/{mod name}/weapons.xml and mods/{mod name}/ships.xml into mods/{mod name}/* mod files
+Use: python3 compile_mod.py {mod name}
+"""
+
 import os
 import sys
 import os.path
@@ -7,11 +12,6 @@ import csv
 import xml.etree.ElementTree as ET
 from copy import deepcopy
 from x4lib import get_macros, get_components, get_wares, read_xml, write_xml, set_xml
-
-"""
-Compile mods/{mod name}/weapons.xml and mods/{mod name}/ships.xml into mods/{mod name}/* mod files
-Use: python3 compile_mod.py {mod name}
-"""
 
 try:
     import config

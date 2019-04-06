@@ -117,6 +117,5 @@ class TestX4Lib(TestCase):
         value_template.format.assert_called_once_with(**row)
 
 
-
 if __name__ == '__main__':
     main()

@@ -1,4 +1,9 @@
-#!/usr/bin/python
+#!/usr/bin/python3
+
+"""
+Pack {src} mod files into {dst} (cat+dat)
+Use: python3 pack_x4.py {src} {dst}
+"""
 
 import os
 import sys
@@ -7,16 +12,8 @@ import hashlib
 import shutil
 
 
-def make_path(path):
-    # in python 3 this can go away since it has a parameter to ignore path exists errors
-    try:
-        os.makedirs(path)
-    except OSError as error:
-        pass
-
-
 def pack(src, dst):
-    make_path(dst)
+    os.makedirs(dst, exist_ok=True)
     with open('{}ext_01.cat'.format(dst), 'wb') as cat_file,\
          open('{}ext_01.dat'.format(dst), 'wb') as dat_file:
         src_offset = len(src)
@@ -32,7 +29,8 @@ def pack(src, dst):
                     digest = hashlib.md5(file_data).hexdigest()
                     rel_filename = os.path.join(path, filename)
                     stat = os.stat(src_filename)
-                    cat_file.write('{} {} {} {}\n'.format(rel_filename, len(file_data), int(stat.st_mtime), digest).encode('utf-8'))
+                    cat_file.write('{} {} {} {}\n'.format(rel_filename, len(file_data),
+                                                          int(stat.st_mtime), digest).encode('utf-8'))
                     dat_file.write(file_data)
 
 
@@ -41,8 +39,7 @@ if __name__ == '__main__':
     if len(args) < 2:
         print("%s <src> <dst>" % sys.argv[0])
     else:
-        src = args[0].rstrip('/') + '/'
-        dst = args[1].rstrip('/') + '/'
-        pack(src, dst)
+        pack(src=args[0].rstrip('/') + '/',
+             dst=args[1].rstrip('/') + '/')
 
 
