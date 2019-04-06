@@ -1,26 +1,6 @@
 import xml.etree.ElementTree as ET
 
 
-def get_macros(src_path):
-    xml = ET.parse(src_path+'/index/macros.xml')
-    return {e.get('name'): e.get('value').replace('\\', '/') for e in xml.findall('./entry')}
-
-
-def get_components(src_path):
-    xml = ET.parse(src_path+'/index/components.xml')
-    return {e.get('name'): e.get('value').replace('\\', '/') for e in xml.findall('./entry')}
-
-
-def get_wares(src_path, allow_fail=False):
-    try:
-        xml = ET.parse(src_path+'/libraries/wares.xml')
-    except:
-        if allow_fail:
-            return
-        raise
-    return xml
-
-
 def read_xml(filepath, allow_fail=False):
     try:
         xml = ET.parse(filepath)
@@ -29,6 +9,20 @@ def read_xml(filepath, allow_fail=False):
             return
         raise
     return xml
+
+
+def get_macros(src_path):
+    xml = read_xml(src_path+'/index/macros.xml')
+    return {e.get('name'): e.get('value').replace('\\', '/') for e in xml.findall('./entry')}
+
+
+def get_components(src_path):
+    xml = read_xml(src_path+'/index/components.xml')
+    return {e.get('name'): e.get('value').replace('\\', '/') for e in xml.findall('./entry')}
+
+
+def get_wares(src_path, allow_fail=False):
+    return read_xml(src_path+'/libraries/wares.xml', allow_fail=allow_fail)
 
 
 def write_xml(filename, xml):
@@ -48,3 +42,4 @@ def set_xml(xml, path, key, value_template, row, label):
         print('set_xml: {}, {}'.format(value_template, row))
         raise
     el.set(key, value)
+    return True
