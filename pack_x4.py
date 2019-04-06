@@ -1,7 +1,6 @@
 #!/usr/bin/python
 
 import os
-import errno
 import sys
 import os.path
 import hashlib
