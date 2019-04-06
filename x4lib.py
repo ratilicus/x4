@@ -1,12 +1,4 @@
-import os
-import errno
-import sys
-import os.path
-import hashlib
-import shutil
-import csv
 import xml.etree.ElementTree as ET
-
 
 
 def get_macros(src_path):
