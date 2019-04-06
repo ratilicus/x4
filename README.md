@@ -90,7 +90,14 @@ faction where it's available (this can be controlled in the libraries/wares.xml)
 - adding ships
 - adding weapons
 
+
 ###### Roadmap
 
 - add adding shields and other components
 - searching for base templates
+
+
+###### Testing
+- setup virtualenv (python3)
+- pip install -r requirements.txt
+- python3 tests.py
