@@ -1,0 +1,4 @@
+id,base_macro,tags,recharge_max,recharge_rate,recharge_delay,name,basename,shortname,description,mk,price_min,price_avg,price_max,restriction
+sh2mj,shield_par_s_standard_01_mk1_macro,small shield 2mj component unhittable,200,100,5.1,2MJ Shield,2MJ Shield,2MJ,2MJ Shield for small ships,1,160,160,160,generaluseequipment
+sh5mj,shield_par_s_standard_01_mk1_macro,small shield 5mj component unhittable,500,300,7.2,5MJ Shield,5MJ Shield,5MJ,5MJ Shield for small ships,1,300,300,300,generaluseequipment
+sh25mj,shield_par_s_standard_01_mk1_macro,small shield 25mj component unhittable,2500,800,10.2,25MJ Shield,25MJ Shield,25MJ,25MJ Shield for small ships,1,1200,1200,1200,generaluseequipment
