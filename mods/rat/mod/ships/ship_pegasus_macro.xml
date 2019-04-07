@@ -3,7 +3,7 @@
   <macro class="ship_s" name="ship_pegasus_macro">
     <component ref="ship_pegasus" />
     <properties>
-      <identification basename="{20101, 100001}" description="{20101, 100003}" icon="ship_s_fight_01" name="{20101, 100000}" shortvariation="{20101, 100005}" variation="{20101, 100004}" />
+      <identification basename="{20101, 100001}" description="{20101, 100002}" icon="ship_s_fight_01" name="{20101, 100000}" shortvariation="{20101, 100005}" variation="{20101, 100004}" />
       <software>
         <software compatible="1" ware="software_dockmk2" />
         <software default="1" ware="software_flightassistmk1" />
@@ -40,7 +40,7 @@
         <macro connection="object" ref="shipstorage_gen_xs_01_macro" />
       </connection>
       <connection ref="con_storage01">
-        <macro connection="ShipConnection" ref="storage_par_s_scout_01_a_macro" />
+        <macro connection="ShipConnection" ref="storage_par_s_scout_01_b_macro" />
       </connection>
     </connections>
   </macro>

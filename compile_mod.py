@@ -12,6 +12,7 @@ import csv
 import xml.etree.ElementTree as ET
 from copy import deepcopy
 from x4lib import get_macros, get_components, get_wares, read_xml, write_xml, set_xml
+from constants import MAPPINGS, T_LIST
 
 try:
     import config
@@ -20,294 +21,64 @@ except ImportError:
     exit(1)
 
 
-WEAPON_COMPONENT_MAPPINGS = [
-    ('./component', 'name', '{weapon_component_id}'),
-    ('./component/connections/connection[@name="WeaponCon_01"]', 'tags', '{tags}'),
-]
-WEAPON_MACRO_MAPPINGS = [
-    ('./macro', 'name', '{weapon_macro_id}'),
-    ('./macro/component', 'ref', '{weapon_component_id}'),
-    ('./macro/properties/identification', 'name', '{{{page_id}, {t_name_id}}}'),
-    ('./macro/properties/identification', 'basename', '{{{page_id}, {t_basename_id}}}'),
-    ('./macro/properties/identification', 'shortname', '{{{page_id}, {t_shortname_id}}}'),
-    ('./macro/properties/identification', 'description', '{{{page_id}, {t_description_id}}}'),
-    ('./macro/properties/identification', 'mk', '{mk}'),
-    ('./macro/properties/bullet', 'class', '{bullet_macro_id}'),
-    ('./macro/properties/heat', 'overheat', '{overheat}'),
-    ('./macro/properties/heat', 'cooldelay', '{cooldelay}'),
-    ('./macro/properties/heat', 'coolrate', '{coolrate}'),
-    ('./macro/properties/heat', 'reenable', '{reenable}'),
-    ('./macro/properties/rotationspeed', 'max', '{rotation_spd}'),
-    ('./macro/properties/rotationacceleration', 'max', '{rotation_acc}'),
-    ('./macro/properties/hull', 'max', '{hull}'),
-]
-BULLET_MACRO_MAPPINGS = [
-    ('./macro', 'name', '{bullet_macro_id}'),
-    ('./macro/properties/bullet', 'speed', '{bullet_speed}'),
-    ('./macro/properties/bullet', 'lifetime', '{bullet_lifetime}'),
-    ('./macro/properties/bullet', 'heat', '{bullet_heat}'),
-    ('./macro/properties/bullet', 'reload', '{bullet_reload}'),
-    ('./macro/properties/bullet', 'damage', '{bullet_damage}'),
-    ('./macro/properties/bullet', 'shield', '{bullet_shield}'),
-    ('./macro/properties/bullet', 'repair', '{bullet_repair}'),
-]
-WARE_MAPPINGS = [
-    ('.', 'id', '{ware_component_id}'),
-    ('.', 'name', '{{{page_id}, {t_name_id}}}'),
-    ('.', 'description', '{{{page_id}, {t_description_id}}}'),
-    ('./price', 'min', '{price_min}'),
-    ('./price', 'average', '{price_avg}'),
-    ('./price', 'max', '{price_max}'),
-    ('./component', 'ref', '{ware_macro_id}'),
-    ('./restriction', 'licence', '{restriction}'),
-]
-SHIP_COMPONENT_MAPPINGS = [
-    ('./component', 'name', '{ship_component_id}'),
-]
-SHIP_MACRO_MAPPINGS = [
-    ('./macro', 'name', '{ship_macro_id}'),
-    ('./macro/component', 'ref', '{ship_component_id}'),
-    ('./macro/properties/identification', 'name', '{{{page_id}, {t_name_id}}}'),
-    ('./macro/properties/identification', 'basename', '{{{page_id}, {t_basename_id}}}'),
-    ('./macro/properties/identification', 'description', '{{{page_id}, {t_description_id}}}'),
-    ('./macro/properties/identification', 'variation', '{{{page_id}, {t_variation_id}}}'),
-    ('./macro/properties/identification', 'shortvariation', '{{{page_id}, {t_short_variation_id}}}'),
-    ('./macro/properties/hull', 'max', '{hull}'),
-    ('./macro/properties/people', 'capacity', '{people}'),
-    ('./macro/properties/physics', 'mass', '{mass}'),
-    ('./macro/properties/physics/inertia', 'pitch', '{inertia_pitch}'),
-    ('./macro/properties/physics/inertia', 'yaw', '{inertia_yaw}'),
-    ('./macro/properties/physics/inertia', 'roll', '{inertia_roll}'),
-    ('./macro/properties/physics/drag', 'forward', '{drag_forward}'),
-    ('./macro/properties/physics/drag', 'reverse', '{drag_reverse}'),
-    ('./macro/properties/physics/drag', 'horizontal', '{drag_horizontal}'),
-    ('./macro/properties/physics/drag', 'vertical', '{drag_vertical}'),
-    ('./macro/properties/physics/drag', 'pitch', '{drag_pitch}'),
-    ('./macro/properties/physics/drag', 'yaw', '{drag_yaw}'),
-    ('./macro/properties/physics/drag', 'roll', '{drag_roll}'),
-]
-SHIELD_COMPONENT_MAPPINGS = [
-    ('./component', 'name', '{ware_component_id}'),
-    ('./component/connections/connection[@name="Connection01"]', 'tags', '{tags}'),
-]
-SHIELD_MACRO_MAPPINGS = [
-    ('./macro', 'name', '{ware_macro_id}'),
-    ('./macro/component', 'ref', '{ware_component_id}'),
-    ('./macro/properties/identification', 'name', '{{{page_id}, {t_name_id}}}'),
-    ('./macro/properties/identification', 'basename', '{{{page_id}, {t_basename_id}}}'),
-    ('./macro/properties/identification', 'shortname', '{{{page_id}, {t_shortname_id}}}'),
-    ('./macro/properties/identification', 'description', '{{{page_id}, {t_description_id}}}'),
-    ('./macro/properties/identification', 'mk', '{mk}'),
-    ('./macro/properties/recharge', 'max', '{recharge_max}'),
-    ('./macro/properties/recharge', 'rate', '{recharge_rate}'),
-    ('./macro/properties/recharge', 'delay', '{recharge_delay}'),
-]
-
-
 def read_src(filename, src_path=config.SRC, allow_fail=False):
-    filepath = src_path.rstrip('/') + '/' + filename + '.xml'
+    try:
+        filepath = src_path.rstrip('/') + '/' + filename + '.xml'
+    except:
+        print('read_src fail:', filename, src_path, allow_fail)
+        raise
     return read_xml(filepath, allow_fail=allow_fail)
 
 
-def compile_weapons(mod, rel_path='/mod/weapons/'):
-    page_id = 20105
-    t_id = 10000
-    page_ts = []
-    mod.mod_ts[page_id] = page_ts
-    weapon_path = mod.mod_path+rel_path
-    os.makedirs(weapon_path, exist_ok=True)
-
-    reader = csv.DictReader(open(mod.mod_path+'/weapons.csv'))
-    for row in reader:
-        _id = row['id']
-        row.update(
-            weapon_macro_id='weapon_{id}_macro'.format(**row),
-            weapon_component_id='weapon_{id}'.format(**row),
-            ware_macro_id='weapon_{id}_macro'.format(**row),
-            ware_component_id='weapon_{id}'.format(**row),
-            bullet_macro_id='bullet_{id}_macro'.format(**row),
-            page_id=page_id, t_name_id=t_id, t_basename_id=t_id+1, t_shortname_id=t_id+2, 
-            t_description_id=t_id+3)
-        page_ts.append((row['t_name_id'], row['name']))
-        page_ts.append((row['t_basename_id'], row['basename']))
-        page_ts.append((row['t_shortname_id'], row['shortname']))
-        page_ts.append((row['t_description_id'], row['description']))
-        t_id += 10
-
-        out_weapon_component_filename = weapon_path+row['weapon_component_id']+'.xml'
-        out_weapon_macro_filename = weapon_path+row['weapon_macro_id']+'.xml'
-        out_bullet_macro_filename = weapon_path+row['bullet_macro_id']+'.xml'
-
-        # read weapon macro (try existing mod file first, in case it has other modifications)
-        weapon_macro_id = row['base_weapon_macro']
-        src_weapon_macro = read_src(mod.src_macros.get(weapon_macro_id))
-        weapon_macro = read_xml(out_weapon_macro_filename, allow_fail=True) or src_weapon_macro
-        weapon_component_id = src_weapon_macro.find('./macro/component').get('ref')
-        bullet_macro_id = src_weapon_macro.find('./macro/properties/bullet').get('class')
-
-        # read weapon component+bullet macro (try existing mod file first, in case it has other modifications)
-        weapon_component = (read_xml(out_weapon_component_filename, allow_fail=True) or
-                            read_src(mod.src_components.get(weapon_component_id)))
-        bullet_macro = (read_xml(out_bullet_macro_filename, allow_fail=True) or
-                        read_src(mod.src_macros.get(bullet_macro_id)))
-
-        for path, key, value_template in WEAPON_COMPONENT_MAPPINGS:
-            set_xml(weapon_component, path, key, value_template, row, label='weapon_component')
-
-        for path, key, value_template in WEAPON_MACRO_MAPPINGS:
-            set_xml(weapon_macro, path, key, value_template, row, label='weapon_macro')
-
-        for path, key, value_template in BULLET_MACRO_MAPPINGS:
-            set_xml(bullet_macro, path, key, value_template, row, label='bullet_macro')
-
-        write_xml(out_weapon_component_filename, weapon_component)
-        write_xml(out_weapon_macro_filename, weapon_macro)
-        write_xml(out_bullet_macro_filename, bullet_macro)
-
-        mod.mod_components.append((row['weapon_component_id'],
-                                   'extensions/{}{}{}'.format(mod.mod_name, rel_path, row['weapon_component_id'])))
-        mod.mod_macros.append((row['weapon_macro_id'],
-                               'extensions/{}{}{}'.format(mod.mod_name, rel_path, row['weapon_macro_id'])))
-        mod.mod_macros.append((row['bullet_macro_id'],
-                               'extensions/{}{}{}'.format(mod.mod_name, rel_path, row['bullet_macro_id'])))
-
-        ware = mod.old_wares and mod.old_wares.find('./add/ware[@id="{}"]'.format(row['ware_component_id']))
-        if ware is None:
-            ware = deepcopy(mod.src_wares.find('./ware[@id="{}"]'.format(row['base_weapon_macro'][:-6])))
-        for path, key, value_template in WARE_MAPPINGS:
-            set_xml(ware, path, key, value_template, row, label='weapon_macro')
-        mod.mod_wares.append(ware)
+def prep_row(row, page_id, t_id, ware_type, page_ts, **additional_updates):
+    _id = row['id']
+    row.update(
+        macro_id='{ware}_{id}_macro'.format(ware=ware_type, id=_id),
+        component_id='{ware}_{id}'.format(ware=ware_type, id=_id),
+        page_id=page_id,
+    )
+    for key, value_template in additional_updates.items():
+        row[key] = value_template.format(**row)
+    for t_name in T_LIST:
+        value = row.get(t_name, '')
+        if value:
+            row['t_{}_id'.format(t_name)] = t_id
+            page_ts.append((t_id, value))
+        t_id += 1
+    return t_id
 
 
-def compile_ships(mod, rel_path='/mod/ships/'):
-    page_id = 20101
-    t_id = 100000
-    page_ts = []
-    mod.mod_ts[page_id] = page_ts
-    ships_path = mod.mod_path+rel_path
-    os.makedirs(ships_path, exist_ok=True)
-
-    reader = csv.DictReader(open(mod.mod_path+'/ships.csv'))
-    for row in reader:
-        _id = row['id']
-        row.update(
-            ship_macro_id='ship_{id}_macro'.format(**row),
-            ship_component_id='ship_{id}'.format(**row),
-            ware_macro_id='ship_{id}_macro'.format(**row),
-            ware_component_id='ship_{id}'.format(**row),
-            page_id=page_id,
-            t_name_id=t_id,
-            t_basename_id=t_id+1,
-            t_description_id=t_id+3,
-            t_variation_id=t_id+4,
-            t_short_variation_id=t_id+5
-        )
-        page_ts.append((row['t_name_id'], row['name']))
-        page_ts.append((row['t_basename_id'], row['basename']))
-        page_ts.append((row['t_description_id'], row['description']))
-        page_ts.append((row['t_variation_id'], row['variation']))
-        page_ts.append((row['t_short_variation_id'], row['shortvariation']))
-        t_id += 10
-
-        out_ship_component_filename = ships_path+row['ship_component_id']+'.xml'
-        out_ship_macro_filename = ships_path+row['ship_macro_id']+'.xml'
-
-        # read ship macro (try existing mod file first, in case it has other modifications)
-        ship_macro_id = row['base_ship_macro']
-        src_ship_macro = read_src(mod.src_macros.get(ship_macro_id))
-        ship_macro = read_xml(out_ship_macro_filename, allow_fail=True) or src_ship_macro
-        ship_component_id = src_ship_macro.find('./macro/component').get('ref')
-
-        # read ship component (try existing mod file first, in case it has other modifications)
-        ship_component = (read_xml(out_ship_component_filename, allow_fail=True) or
-                          read_src(mod.src_components.get(ship_component_id)))
-
-        for path, key, value_template in SHIP_COMPONENT_MAPPINGS:
-            set_xml(ship_component, path, key, value_template, row, label='ship_component')
-
-        for path, key, value_template in SHIP_MACRO_MAPPINGS:
-            set_xml(ship_macro, path, key, value_template, row, label='ship_macro')
-
-        write_xml(out_ship_component_filename, ship_component)
-        write_xml(out_ship_macro_filename, ship_macro)
-
-        mod.mod_components.append((row['ship_component_id'],
-                                   'extensions/{}{}{}'.format(mod.mod_name, rel_path, row['ship_component_id'])))
-        mod.mod_macros.append((row['ship_macro_id'],
-                               'extensions/{}{}{}'.format(mod.mod_name, rel_path, row['ship_macro_id'])))
-
-        ware = mod.old_wares and mod.old_wares.find('./add/ware[@id="{}"]'.format(row['ware_component_id']))
-        if ware is None:
-            ware = deepcopy(mod.src_wares.find('./ware[@id="{}"]'.format(row['base_ship_macro'][:-6])))
-        for path, key, value_template in WARE_MAPPINGS:
-            set_xml(ware, path, key, value_template, row, label='ship_macro')
-        mod.mod_wares.append(ware)
+def compile_macro(mod, row, obj_path, rel_path, mapping, macro_id='macro_id', base_macro='base_macro'):
+    mod_macro_filename = obj_path + row[macro_id] + '.xml'
+    src_macro_id = row[base_macro]
+    src_macro = read_src(mod.src_macros.get(src_macro_id))
+    mod_macro = read_xml(mod_macro_filename, allow_fail=True) or deepcopy(src_macro)
+    for path, key, value_template in mapping:
+        set_xml(mod_macro, path, key, value_template, row, label='mod_macro')
+    write_xml(mod_macro_filename, mod_macro)
+    mod.mod_macros.append((row[macro_id],
+                           'extensions/{}{}{}'.format(mod.mod_name, rel_path, row[macro_id])))
+    return src_macro
 
 
-def compile_shields(mod, rel_path='/mod/shields/'):
-    ware_type = 'shield'
-    page_id = 20106
-    t_id = 10000
-    page_ts = []
-    mod.mod_ts[page_id] = page_ts
-    obj_path = mod.mod_path+rel_path
-    os.makedirs(obj_path, exist_ok=True)
+def compile_component(mod, row, src_component_id, obj_path, rel_path, mapping):
+    mod_component_filename = obj_path + row['component_id'] + '.xml'
+    mod_component = (read_xml(mod_component_filename, allow_fail=True) or
+                     read_src(mod.src_components.get(src_component_id)))
+    for path, key, value_template in mapping:
+        set_xml(mod_component, path, key, value_template, row, label='mod_component')
+    write_xml(mod_component_filename, mod_component)
+    mod.mod_components.append((row['component_id'],
+                               'extensions/{}{}{}'.format(mod.mod_name, rel_path, row['component_id'])))
 
-    reader = csv.DictReader(open(mod.mod_path+'/shields.csv'))
-    for row in reader:
-        _id = row['id']
-        row.update(
-            ware_macro_id='{ware}_{id}_macro'.format(ware=ware_type, **row),
-            ware_component_id='{ware}_{id}'.format(ware=ware_type, **row),
-            page_id=page_id,
-            t_name_id=t_id,
-            t_basename_id=t_id+1,
-            t_description_id=t_id+2,
-            t_shortname_id=t_id+3,
-            t_variation_id=t_id+4,
-            t_short_variation_id=t_id+5
-        )
-        page_ts.append((row['t_name_id'], row['name']))
-        page_ts.append((row['t_basename_id'], row['basename']))
-        page_ts.append((row['t_description_id'], row['description']))
-        page_ts.append((row['t_shortname_id'], row.get('shortname', '')))
-        page_ts.append((row['t_variation_id'], row.get('variation', '')))
-        page_ts.append((row['t_short_variation_id'], row.get('shortvariation', '')))
-        t_id += 10
 
-        mod_component_filename = obj_path+row['ware_component_id']+'.xml'
-        mod_macro_filename = obj_path+row['ware_macro_id']+'.xml'
-
-        # read macro (try existing mod file first, in case it has other modifications)
-        mod_macro_id = row['base_macro']
-        src_macro = read_src(mod.src_macros.get(mod_macro_id))
-        mod_macro = read_xml(mod_macro_filename, allow_fail=True) or src_macro
-        mod_component_id = src_macro.find('./macro/component').get('ref')
-
-        # read component (try existing mod file first, in case it has other modifications)
-        mod_component = (read_xml(mod_component_filename, allow_fail=True) or
-                            read_src(mod.src_components.get(mod_component_id)))
-
-        for path, key, value_template in SHIELD_COMPONENT_MAPPINGS:
-            set_xml(mod_component, path, key, value_template, row, label='mod_component')
-
-        for path, key, value_template in SHIELD_MACRO_MAPPINGS:
-            set_xml(mod_macro, path, key, value_template, row, label='mod_macro')
-
-        write_xml(mod_component_filename, mod_component)
-        write_xml(mod_macro_filename, mod_macro)
-
-        mod.mod_components.append((row['ware_component_id'],
-                                   'extensions/{}{}{}'.format(mod.mod_name, rel_path, row['ware_component_id'])))
-        mod.mod_macros.append((row['ware_macro_id'],
-                               'extensions/{}{}{}'.format(mod.mod_name, rel_path, row['ware_macro_id'])))
-
-        ware = mod.old_wares and mod.old_wares.find('./add/ware[@id="{}"]'.format(row['ware_component_id']))
-        if ware is None:
-            ware = deepcopy(mod.src_wares.find('./ware[@id="{}"]'.format(row['base_macro'][:-6])))
-        for path, key, value_template in WARE_MAPPINGS:
-            set_xml(ware, path, key, value_template, row, label='mod_macro')
-        mod.mod_wares.append(ware)
+def compile_ware(mod, row):
+    ware = mod.old_wares and mod.old_wares.find('./add/ware/component[@ref="{}"]/..'.format(row['macro_id']))
+    if ware is None:
+        ware = deepcopy(mod.src_wares.find('./ware[@id="{}"]'.format(row['base_macro'][:-6])))
+    for path, key, value_template in MAPPINGS['ware']:
+        set_xml(ware, path, key, value_template, row, label='mod_macro')
+    mod.mod_wares.append(ware)
 
 
 def write_index_file(filename, entries):
@@ -355,6 +126,33 @@ def write_wares_file(filename, wares):
     write_xml(filename, ET.ElementTree(diff))
 
 
+def compile_ware_type(mod, ware_type, page_id, t_id=100000, additional_compile=None):
+    rel_path = '/mod/{}s/'.format(ware_type)
+    macro_mappings = MAPPINGS[ware_type]['macro']
+    component_mappings = MAPPINGS[ware_type]['component']
+    page_ts = []
+    mod.mod_ts[page_id] = page_ts
+    obj_path = mod.mod_path+rel_path
+    os.makedirs(obj_path, exist_ok=True)
+    reader = csv.DictReader(open(mod.mod_path+'/{}s.csv'.format(ware_type)))
+    for row in reader:
+        t_id = prep_row(row, page_id, t_id, ware_type, page_ts)
+        compile_ware(mod, row)
+        src_macro = compile_macro(mod, row, obj_path, rel_path, macro_mappings)
+        src_component_id = src_macro.find('./macro/component').get('ref')
+        compile_component(mod, row, src_component_id, obj_path, rel_path, component_mappings)
+
+        if additional_compile:
+            additional_compile(mod, row, src_macro, obj_path, rel_path)
+
+
+def compile_weapon_bullet(mod, row, src_macro, obj_path, rel_path):
+    row['bullet_macro_id'] = 'bullet_{id}_macro'.format(id=row['id'])
+    row['src_bullet_macro_id'] = src_macro.find('./macro/properties/bullet').get('class')
+    compile_macro(mod, row, obj_path, rel_path, MAPPINGS['weapon']['bullet_macro'],
+                  macro_id='bullet_macro_id', base_macro='src_bullet_macro_id')
+
+
 def compile_mod(name):
     class mod:
         mod_name = name
@@ -368,9 +166,9 @@ def compile_mod(name):
         src_wares = get_wares(src_path=config.SRC)
         old_wares = get_wares(src_path=mod_path, allow_fail=True)
 
-    compile_weapons(mod)
-    compile_shields(mod)
-    compile_ships(mod)
+    compile_ware_type(mod, ware_type='weapon', page_id=20105, additional_compile=compile_weapon_bullet)
+    compile_ware_type(mod, ware_type='shield', page_id=20106)
+    compile_ware_type(mod, ware_type='ship', page_id=20101)
 
     os.makedirs(mod.mod_path+'/index/', exist_ok=True)
     write_index_file(mod.mod_path+'/index/macros.xml', mod.mod_macros)
@@ -389,6 +187,3 @@ if __name__ == '__main__':
         print("%s <mod_name>" % sys.argv[0])
     else:
         compile_mod(name=args[0])
-
-
-

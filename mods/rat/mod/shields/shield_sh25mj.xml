@@ -9,7 +9,7 @@
 			</layer>
 		</layers>
 		<connections>
-			<connection name="container" tags="small shield 25mj component unhittable" value="0" />
+			<connection name="container" tags="contents" value="0" />
 			<connection name="position" tags="position" value="1" />
 			<connection name="Connection02" tags="part animation nocollision detail_xl forceoutline  ">
 				<offset>
