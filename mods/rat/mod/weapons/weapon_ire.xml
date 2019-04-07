@@ -9,7 +9,7 @@
 			</layer>
 		</layers>
 		<connections>
-			<connection name="container" tags="contents" value="0" />
+			<connection name="container" tags="component weapon small ire" value="0" />
 			<connection name="position" tags="position" value="1" />
 			<connection name="Connection01" tags="part platformcollision forceoutline  ">
 				<offset />

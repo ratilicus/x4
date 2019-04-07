@@ -10,11 +10,31 @@
 <t id="10012">PAC</t>
 <t id="10013">Particle Accelerator Cannon</t>
 </page>
+<page id="20106">
+<t id="10000">2MJ Shield</t>
+<t id="10001">2MJ Shield</t>
+<t id="10002">2MJ Shield for small ships</t>
+<t id="10003">2MJ</t>
+<t id="10004" />
+<t id="10005" />
+<t id="10010">5MJ Shield</t>
+<t id="10011">5MJ Shield</t>
+<t id="10012">5MJ Shield for small ships</t>
+<t id="10013">5MJ</t>
+<t id="10014" />
+<t id="10015" />
+<t id="10020">25MJ Shield</t>
+<t id="10021">25MJ Shield</t>
+<t id="10022">25MJ Shield for small ships</t>
+<t id="10023">25MJ</t>
+<t id="10024" />
+<t id="10025" />
+</page>
 <page id="20101">
 <t id="100000">Pegasus X</t>
 <t id="100001">Pegasus</t>
-<t id="100002">Pegasus – Extra version</t>
-<t id="100003">Xtra</t>
-<t id="100004">X</t>
+<t id="100003">Pegasus – Extra version</t>
+<t id="100004">Xtra</t>
+<t id="100005">X</t>
 </page>
 </language>

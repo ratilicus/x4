@@ -1,2 +1,2 @@
 id,base_ship_macro,hull,people,mass,inertia_pitch,inertia_yaw,inertia_roll,drag_forward,drag_reverse,drag_horizontal,drag_vertical,drag_pitch,drag_yaw,drag_roll,name,basename,description,variation,shortvariation,price_min,price_avg,price_max,restriction
-pegasus,ship_par_s_scout_01_b_macro,1300,2,5.765,0.855,0.855,0.684,3.255,7.64,4.09,4.09,3.208,3.208,3.208,Pegasus X,Pegasus,Pegasus – Extra version,Xtra,X,83000,97000,120000,generaluseship
+pegasus,ship_par_s_scout_01_b_macro,1300,2,5.765,0.855,0.855,0.684,3.255,7.64,4.09,4.09,3.208,3.208,3.208,Pegasus X,Pegasus,Pegasus – Extra version,Xtra,X,2000,2000,2000,generaluseship
