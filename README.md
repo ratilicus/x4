@@ -42,14 +42,27 @@ And based on the base_ship_macro/base_weapon_macro, it finds the macro file, cop
 updating the macro and component values with the ones in the csv file. 
 
 
+###### Finding Macros
+
+When you extract the scripts with `python3 extract_x4.py --extract` the `src` dir should have all the script files
+
+- all macros are indexed in `./src/index/macros.xml`
+- all components are indexed in `./src/index/components.xml`
+- ship macros are in `./src/assets/units/*/macros/ship_{arg|par|tel}_*_macro.xml`
+- shield macros are in `./src/assets/props/SurfaceElements/macros/shield_*_macro.xml`
+- weapon macros are in `./src/assets/props/WeaponSystems/*/macros/*_macros.xml`
+
+The `base_macro` in the csv files should reference the macro name (eg. <macro name="`ship_*_macro`" ...>)
+
+
 ###### Modding Steps
 
 Step 1: Create config.py
-run ./setup.sh
+run `./setup.sh`
 (this should create a config.py with paths for present dir, game dir, src dir, mods dir)
 
 Step 2: extract X4 scripts
-run python3 extract_x4.py --extract
+run `python3 extract_x4.py --extract`
 (this should extract all the scripts/xml from the game cats+dats into src/ dir)
 
 Step 3: make modifications
@@ -57,10 +70,10 @@ use:
     mods/rat/content.xml
     mods/rat/ships.csv
     mods/rat/weapons.csv
-as a template to create your own mod
+as a templates to create your own mod
 
 Step 4: compile mod
-run python3 compile_mod.py {your mod name}
+run `python3 compile_mod.py {your mod name}`
 (this should read the csv files and copy the appropriate xml source files, 
  update them with values in csv, and place them in your mod dir.  
  It should create the index, libraries, mod, and t dirs and files in them)
@@ -70,7 +83,7 @@ the csv files have limited changes, but you can make additional changes to your 
 (re-running compile mod should update csv values without losing your changes)
 
 Step 6: pack your mod
-run python3 pack_mod.py {mod name}
+run `python3 pack_mod.py {mod name}`
 (this should take the files in your mods/{mod name}/, copy the files in root dir and
  pack the files in index, libraries, mod, and t dirs into your {game dir}/extensions/{mod name}/)
 
@@ -89,13 +102,14 @@ faction where it's available (this can be controlled in the libraries/wares.xml)
 - compiling mod from csv files via compile_mod.py
 - adding ships
 - adding weapons
-
+- adding shields
 
 ###### Roadmap
 
-- add adding shields and other components
+- add adding other components
 - searching for base templates
 - add proper error handling and validation
+- add proper logging
 - add complete unit test set
 - add integration tests
 
@@ -106,13 +120,14 @@ faction where it's available (this can be controlled in the libraries/wares.xml)
 - python3 tests.py
 
 
-###### rat mode
-- testing adding weapons, ships - confirmed
+###### rat mod
+- testing adding weapons, ships, shields - confirmed
 - testing weapon tags (to see if tags can be used to restrict specific ship weapon mounts to specific weapon types) - confirmed
+- testing shield tags (seems we can add additional tags, but can't seem to prevent standard shields from being listed, on ships)
 - added IRE, PAC weapons
+- added 2MJ, 5MJ, 25MJ shields
 - added Pegasus Xtra
-    - added 2 wing based weapons
-    - changed the weapon flags on primary weapon to allow missile, ire, and pac
-    - wing weapons can only mount ire
+    - added 2 wing based weapons (primary can now mount pac, ire, wing weps can mount ire only)
+    - modified shield tags (shield can support 2MJ, 5MJ shields, can't seem to be able to remove support for small standard shields)
 
 
