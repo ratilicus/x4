@@ -1,10 +1,15 @@
-from unittest import main, TestCase
-from mock import patch, MagicMock
+"""
+Run tests
+Use: ./run_tests.sh
+"""
+
+from unittest import TestCase
+from unittest.mock import patch, MagicMock
 
 from x4lib import read_xml, get_macros, get_components, get_wares, write_xml, set_xml
 
 
-class TestX4Lib(TestCase):
+class TestX4LibUnitTest(TestCase):
 
     @patch('x4lib.ET')
     def test_read_xml(self, patch_ET):
@@ -100,6 +105,7 @@ class TestX4Lib(TestCase):
         label = 'label-for-error'
         with self.assertRaises(SystemExit):
             set_xml(xml=xml, path=path, key=key, value_template=value_template, row=row, label=label)
+
         xml.find.assert_called_once_with(path)
 
     def test_set_xml_value_template_error(self):
@@ -110,12 +116,9 @@ class TestX4Lib(TestCase):
         value_template.format.side_effect = Exception
         row = {'a': 1, 'b': 2}
         label = 'label-for-error'
-        with self.assertRaises(Exception):
+        with self.assertRaises(SystemExit):
             set_xml(xml=xml, path=path, key=key, value_template=value_template, row=row, label=label)
 
         xml.find.assert_called_once_with(path)
         value_template.format.assert_called_once_with(**row)
 
-
-if __name__ == '__main__':
-    main()

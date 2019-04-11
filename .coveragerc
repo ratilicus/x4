@@ -1,0 +1,8 @@
+[run]
+data_file = .coverage
+source=.
+omit =
+    tests/*
+    config.py
+    constants.py
+    venv*

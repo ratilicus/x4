@@ -9,24 +9,23 @@ import os
 import sys
 import os.path
 import csv
+import logging
 import xml.etree.ElementTree as ET
 from copy import deepcopy
 from x4lib import get_macros, get_components, get_wares, read_xml, write_xml, set_xml
 from constants import MAPPINGS, T_LIST
 
+logger = logging.getLogger('x4.' + __name__)
+
 try:
     import config
 except ImportError:
-    print('config.py not found, please run setup.sh before using this script!')
+    logger.exception('config.py not found, please run setup.sh before using this script!')
     exit(1)
 
 
 def read_src(filename, src_path=config.SRC, allow_fail=False):
-    try:
-        filepath = src_path.rstrip('/') + '/' + filename + '.xml'
-    except:
-        print('read_src fail:', filename, src_path, allow_fail)
-        raise
+    filepath = src_path.rstrip('/') + '/' + filename + '.xml'
     return read_xml(filepath, allow_fail=allow_fail)
 
 
@@ -182,8 +181,11 @@ def compile_mod(name):
 
 
 if __name__ == '__main__':
+    logger.addHandler(logging.StreamHandler())
+    logger.setLevel(logging.INFO)
+
     args = sys.argv[1:]
     if len(args) < 1:
-        print("%s <mod_name>" % sys.argv[0])
+        logger.info("%s <mod_name>", sys.argv[0])
     else:
         compile_mod(name=args[0])

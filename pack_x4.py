@@ -10,6 +10,9 @@ import sys
 import os.path
 import hashlib
 import shutil
+import logging
+
+logger = logging.getLogger('x4.' + __name__)
 
 
 def pack(src, dst):
@@ -35,9 +38,12 @@ def pack(src, dst):
 
 
 if __name__ == '__main__':
+    logger.addHandler(logging.StreamHandler())
+    logger.setLevel(logging.INFO)
+
     args = sys.argv[1:]
     if len(args) < 2:
-        print("%s <src> <dst>" % sys.argv[0])
+        logger.info("%s <src> <dst>", sys.argv[0])
     else:
         pack(src=args[0].rstrip('/') + '/',
              dst=args[1].rstrip('/') + '/')
