@@ -103,6 +103,7 @@ faction where it's available (this can be controlled in the libraries/wares.xml)
 - adding ships
 - adding weapons
 - adding shields
+- added xmf2obj.py script to extract Wavefront obj (can be imported in Blender)
 
 ###### Roadmap
 
