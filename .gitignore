@@ -5,6 +5,7 @@ env
 venv
 game
 .idea
+.coverage
 config.py
 docker-compose.yml
 

@@ -1,4 +1,7 @@
+import logging
 import xml.etree.ElementTree as ET
+
+logger = logging.getLogger('x4.' + __name__)
 
 
 def read_xml(filepath, allow_fail=False):
@@ -6,7 +9,9 @@ def read_xml(filepath, allow_fail=False):
         xml = ET.parse(filepath)
     except Exception as e:
         if allow_fail:
+            logger.info('read_xml failed', extra=dict(filepath=filepath, allow_fail=allow_fail))
             return
+        logger.exception('read_xml error!', extra=dict(filepath=filepath, allow_fail=allow_fail))
         raise
     return xml
 
@@ -33,13 +38,12 @@ def write_xml(filename, xml):
 def set_xml(xml, path, key, value_template, row, label):
     el = xml.find(path)
     if el is None:
-        print("path '{}' not found in {}".format(path, label))
-        ET.dump(xml)
+        logger.warning("path '{}' not found in {}".format(path, label))
         exit(0)
     try:
         value = value_template.format(**row)
     except Exception:
-        print('set_xml: {}, {}'.format(value_template, row))
-        raise
+        logger.error('set_xml: {}, {}'.format(value_template, row), exc_info=True)
+        exit(0)
     el.set(key, value)
     return True

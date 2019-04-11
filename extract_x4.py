@@ -8,11 +8,14 @@ Use: python extract_x4.py --extract
 import os
 import sys
 import os.path
+import logging
+
+logger = logging.getLogger('x4.' + __name__)
 
 try:
     import config
 except ImportError:
-    print('config.py not found, please run setup.sh before using this script!')
+    logger.exception('config.py not found, please run setup.sh before using this script!')
     exit(1)
 
 
@@ -31,7 +34,7 @@ class CatParser(object):
             out_filename, out_size, _, _ = line.rsplit(' ', 3)
             out_size = int(out_size)
         except ValueError as e:
-            print('parse line error', e, line)
+            logger.exception('parse line error!', extra=dict(line=line))
             raise
         return out_filename, out_size
 
@@ -67,7 +70,7 @@ class CatParser(object):
         files_iter = self.cat_files_iterator(cat_filename)
         for filename, offset, size in files_iter:
             if scripts_only and self.is_script_file(filename):
-                print('%60s (%10d)' % (filename, size))
+                logger.info('%60s (%10d)', filename, size)
 
     def extract_files(self, cat_filename, out_path, scripts_only=True):
         """
@@ -92,11 +95,11 @@ class CatParser(object):
                     if self.is_script_file(filename):
                         out_file_path = '{}/{}'.format(out_path, filename)
                         self.extract_file(dat_file, out_file_path, offset, size)
-                        print(cat_filename, out_file_path)
+                        logger.info('%60s (%10d)', cat_filename, out_file_path)
                 else:
                     out_file_path = '{}/{}'.format(out_path, filename)
                     self.extract_file(dat_file, out_file_path, offset, size)
-                    print(cat_filename, out_file_path)
+                    logger.info('%60s (%10d)', cat_filename, out_file_path)
 
     def extract_file(self, dat_file, out_file_path, offset, size):
         """
@@ -124,9 +127,12 @@ class CatParser(object):
 
 
 if __name__ == '__main__':
+    logger.addHandler(logging.StreamHandler())
+    logger.setLevel(logging.INFO)
+
     args = set(sys.argv[1:])
     if not args:
-        print("%s <--extract | --list> <--all>" % sys.argv[0])
+        logger.info("%s <--extract | --list> <--all>", sys.argv[0])
 
     elif args & {'--extract', '--list'}:
         cats = sorted(f for f in os.listdir(config.X4) if f.endswith('.cat'))
