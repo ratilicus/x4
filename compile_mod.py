@@ -12,19 +12,13 @@ import csv
 import logging
 import xml.etree.ElementTree as ET
 from copy import deepcopy
-from x4lib import get_macros, get_components, get_wares, read_xml, write_xml, set_xml
 from constants import MAPPINGS, T_LIST
+from x4lib import get_config, get_macros, get_components, get_wares, read_xml, write_xml, set_xml
 
 logger = logging.getLogger('x4.' + __name__)
 
-try:
-    import config
-except ImportError:
-    logger.exception('config.py not found, please run setup.sh before using this script!')
-    exit(1)
 
-
-def read_src(filename, src_path=config.SRC, allow_fail=False):
+def read_src(filename, src_path, allow_fail=False):
     filepath = src_path.rstrip('/') + '/' + filename + '.xml'
     return read_xml(filepath, allow_fail=allow_fail)
 
@@ -47,10 +41,10 @@ def prep_row(row, page_id, t_id, ware_type, page_ts, **additional_updates):
     return t_id
 
 
-def compile_macro(mod, row, obj_path, rel_path, mapping, macro_id='macro_id', base_macro='base_macro'):
+def compile_macro(mod, row, obj_path, rel_path, mapping, src_path, macro_id='macro_id', base_macro='base_macro'):
     mod_macro_filename = obj_path + row[macro_id] + '.xml'
     src_macro_id = row[base_macro]
-    src_macro = read_src(mod.src_macros.get(src_macro_id))
+    src_macro = read_src(mod.src_macros.get(src_macro_id), src_path=src_path)
     mod_macro = read_xml(mod_macro_filename, allow_fail=True) or deepcopy(src_macro)
     for path, key, value_template in mapping:
         set_xml(mod_macro, path, key, value_template, row, label='mod_macro')
@@ -60,10 +54,10 @@ def compile_macro(mod, row, obj_path, rel_path, mapping, macro_id='macro_id', ba
     return src_macro
 
 
-def compile_component(mod, row, src_component_id, obj_path, rel_path, mapping):
+def compile_component(mod, row, src_component_id, obj_path, rel_path, mapping, src_path):
     mod_component_filename = obj_path + row['component_id'] + '.xml'
     mod_component = (read_xml(mod_component_filename, allow_fail=True) or
-                     read_src(mod.src_components.get(src_component_id)))
+                     read_src(mod.src_components.get(src_component_id), src_path=src_path))
     for path, key, value_template in mapping:
         set_xml(mod_component, path, key, value_template, row, label='mod_component')
     write_xml(mod_component_filename, mod_component)
@@ -125,7 +119,7 @@ def write_wares_file(filename, wares):
     write_xml(filename, ET.ElementTree(diff))
 
 
-def compile_ware_type(mod, ware_type, page_id, t_id=100000, additional_compile=None):
+def compile_ware_type(mod, ware_type, page_id, src_path, t_id=100000, additional_compile=None):
     rel_path = '/mod/{}s/'.format(ware_type)
     macro_mappings = MAPPINGS[ware_type]['macro']
     component_mappings = MAPPINGS[ware_type]['component']
@@ -137,22 +131,22 @@ def compile_ware_type(mod, ware_type, page_id, t_id=100000, additional_compile=N
     for row in reader:
         t_id = prep_row(row, page_id, t_id, ware_type, page_ts)
         compile_ware(mod, row)
-        src_macro = compile_macro(mod, row, obj_path, rel_path, macro_mappings)
+        src_macro = compile_macro(mod, row, obj_path, rel_path, macro_mappings, src_path=src_path)
         src_component_id = src_macro.find('./macro/component').get('ref')
-        compile_component(mod, row, src_component_id, obj_path, rel_path, component_mappings)
+        compile_component(mod, row, src_component_id, obj_path, rel_path, component_mappings, src_path=src_path)
 
         if additional_compile:
-            additional_compile(mod, row, src_macro, obj_path, rel_path)
+            additional_compile(mod, row, src_macro, obj_path, rel_path, src_path=src_path)
 
 
-def compile_weapon_bullet(mod, row, src_macro, obj_path, rel_path):
+def compile_weapon_bullet(mod, row, src_macro, obj_path, rel_path, src_path):
     row['bullet_macro_id'] = 'bullet_{id}_macro'.format(id=row['id'])
     row['src_bullet_macro_id'] = src_macro.find('./macro/properties/bullet').get('class')
     compile_macro(mod, row, obj_path, rel_path, MAPPINGS['weapon']['bullet_macro'],
-                  macro_id='bullet_macro_id', base_macro='src_bullet_macro_id')
+                  macro_id='bullet_macro_id', base_macro='src_bullet_macro_id', src_path=src_path)
 
 
-def compile_mod(name):
+def compile_mod(name, config):
     class mod:
         mod_name = name
         mod_path = config.MODS + '/' + mod_name
@@ -165,9 +159,10 @@ def compile_mod(name):
         src_wares = get_wares(src_path=config.SRC)
         old_wares = get_wares(src_path=mod_path, allow_fail=True)
 
-    compile_ware_type(mod, ware_type='weapon', page_id=20105, additional_compile=compile_weapon_bullet)
-    compile_ware_type(mod, ware_type='shield', page_id=20106)
-    compile_ware_type(mod, ware_type='ship', page_id=20101)
+    compile_ware_type(mod, ware_type='weapon', page_id=20105, additional_compile=compile_weapon_bullet,
+                      src_path=config.SRC)
+    compile_ware_type(mod, ware_type='shield', page_id=20106, src_path=config.SRC)
+    compile_ware_type(mod, ware_type='ship', page_id=20101, src_path=config.SRC)
 
     os.makedirs(mod.mod_path+'/index/', exist_ok=True)
     write_index_file(mod.mod_path+'/index/macros.xml', mod.mod_macros)
@@ -188,4 +183,4 @@ if __name__ == '__main__':
     if len(args) < 1:
         logger.info("%s <mod_name>", sys.argv[0])
     else:
-        compile_mod(name=args[0])
+        compile_mod(name=args[0], config=get_config())

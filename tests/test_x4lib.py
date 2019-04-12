@@ -6,10 +6,24 @@ Use: ./run_tests.sh
 from unittest import TestCase
 from unittest.mock import patch, MagicMock
 
-from x4lib import read_xml, get_macros, get_components, get_wares, write_xml, set_xml
+from x4lib import get_config, read_xml, get_macros, get_components, get_wares, write_xml, set_xml
 
 
-class TestX4LibUnitTest(TestCase):
+class X4LibUnitTest(TestCase):
+
+    @patch('builtins.__import__')
+    def test_get_config(self, patch_import):
+        self.assertEqual(get_config(), patch_import.return_value)
+        patch_import.assert_called_once_with('config')
+
+    @patch('builtins.__import__')
+    def test_get_config_dne(self, patch_import):
+        # test if config does not exist
+        patch_import.side_effect = ImportError
+        with self.assertRaises(SystemExit):
+            get_config()
+
+        patch_import.assert_called_once_with('config')
 
     @patch('x4lib.ET')
     def test_read_xml(self, patch_ET):

@@ -2,4 +2,4 @@
 
 coverage run -m tests
 
-coverage report
+coverage report -m

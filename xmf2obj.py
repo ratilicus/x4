@@ -24,13 +24,7 @@ import os
 import zlib
 from io import BytesIO
 from struct import unpack
-
-
-try:
-    import config
-except ImportError:
-    logger.exception('config.py not found, please run setup.sh before using this script!')
-    exit(1)
+from x4lib import get_config
 
 
 class Chunk(object):
@@ -183,4 +177,5 @@ if __name__ == '__main__':
         xmf_filename = sys.argv[1]
         file_pointer = open(xmf_filename, 'rb')
         name = xmf_filename.rsplit('/', 2)[1][:-5]
+        config = get_config()
         read_xmf(name, file_pointer, obj_path=config.OBJS)
