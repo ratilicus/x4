@@ -4,6 +4,15 @@ import xml.etree.ElementTree as ET
 logger = logging.getLogger('x4.' + __name__)
 
 
+def get_config():
+    try:
+        config = __import__('config')
+    except ImportError:
+        logger.exception('config.py not found, please run setup.sh before using this script!')
+        exit(1)
+    return config
+
+
 def read_xml(filepath, allow_fail=False):
     try:
         xml = ET.parse(filepath)

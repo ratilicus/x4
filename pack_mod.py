@@ -7,15 +7,15 @@ Use: python3 pack_mod.py {mod name}
 
 import sys
 import logging
-from pack_x4 import pack
+from x4lib import get_config
+from pack_x4 import pack_path
 
 logger = logging.getLogger('x4.' + __name__)
 
-try:
-    import config
-except ImportError:
-    logger.exception('config.py not found, please run setup.sh before using this script!')
-    exit(1)
+
+def pack_mod(mod_name, config):
+    pack_path(src='{}/{}/'.format(config.MODS, mod_name),
+              dst='{}/extensions/{}/'.format(config.X4, mod_name))
 
 
 if __name__ == '__main__':
@@ -26,9 +26,7 @@ if __name__ == '__main__':
     if len(args) < 1:
         logger.info("%s <mod_name>", sys.argv[0])
     else:
-        mod_name = args[0]
-        pack(src='{}/{}/'.format(config.MODS, mod_name),
-             dst='{}/extensions/{}/'.format(config.X4, mod_name))
+        pack_mod(mod_name=args[0], config=get_config())
 
 
 
