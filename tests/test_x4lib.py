@@ -4,9 +4,9 @@ Use: ./run_tests.sh
 """
 
 from unittest import TestCase
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch, call, MagicMock
 
-from x4lib import get_config, read_xml, get_macros, get_components, get_wares, write_xml, set_xml
+from x4lib import get_config, read_xml, get_macros, get_components, get_wares, write_xml, set_xml, update_xml
 
 
 class X4LibUnitTest(TestCase):
@@ -136,3 +136,18 @@ class X4LibUnitTest(TestCase):
         xml.find.assert_called_once_with(path)
         value_template.format.assert_called_once_with(**row)
 
+    @patch('x4lib.set_xml')
+    def test_update_xml(self, patch_set_xml):
+        xml = MagicMock()
+        row = MagicMock()
+        mapping = [
+            ('.xml/path/el-1', 'attr-1', 'tpl-str-1'),
+            ('.xml/pathel-2', 'attr-2', 'tpl-str-2'),
+        ]
+        label = MagicMock()
+        update_xml(xml=xml, row=row, mapping=mapping, label=label)
+        self.assertEqual(patch_set_xml.call_count, 2)
+        patch_set_xml.assert_has_calls([
+            call(xml, mapping[0][0], mapping[0][1], mapping[0][2], row, label=label),
+            call(xml, mapping[1][0], mapping[1][1], mapping[1][2], row, label=label),
+        ])

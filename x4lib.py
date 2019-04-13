@@ -56,3 +56,8 @@ def set_xml(xml, path, key, value_template, row, label):
         exit(0)
     el.set(key, value)
     return True
+
+
+def update_xml(xml, row, mapping, label):
+    for path, key, value_template in mapping:
+        set_xml(xml, path, key, value_template, row, label=label)
