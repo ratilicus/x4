@@ -6,27 +6,28 @@ Use: ./run_tests.sh
 from unittest import TestCase
 from unittest.mock import patch, call, MagicMock
 import xml.etree.ElementTree as ET
-from compile_mod import read_src, prep_row, compile_macro, compile_component, compile_ware, write_index_file, \
-    write_ts_file, write_wares_file, compile_ware_type, compile_weapon_bullet, compile_mod
+# from compile_mod import read_src, prep_row, compile_macro, compile_component, compile_ware, write_index_file, \
+#     write_ts_file, write_wares_file, compile_ware_type, compile_weapon_bullet, compile_mod, MAPPINGS
+from compile_mod import X4ModCompiler, MAPPINGS
 
 
-class CompileModUnitTest(TestCase):
+class ModCompilerUnitTest(TestCase):
 
-    @patch('compile_mod.read_xml')
-    def test_read_src(self, patch_read_xml):
-        name = 'assets/units/size_s/ship_par_s_scout_01_b_macro'
-        src_path = 'path/to/src'
-        read_src(name=name, src_path=src_path)
-        patch_read_xml.assert_called_once_with('path/to/src/assets/units/size_s/ship_par_s_scout_01_b_macro.xml',
-                                               allow_fail=False)
-
-    @patch('compile_mod.read_xml')
-    def test_read_src_allow_fail(self, patch_read_xml):
-        name = 'assets/units/size_s/ship_par_s_scout_01_b_macro'
-        src_path = 'path/to/src'
-        read_src(name=name, src_path=src_path, allow_fail=True)
-        patch_read_xml.assert_called_once_with('path/to/src/assets/units/size_s/ship_par_s_scout_01_b_macro.xml',
-                                               allow_fail=True)
+    def setUp(self) -> None:
+        self.compiler = X4ModCompiler(name='test-mod', config=None)
+        self.compiler.mod_path = 'path/to/test-mod'
+        self.compiler.src_path = 'path/to/src'
+        self.compiler.src_macros = MagicMock()
+        self.compiler.src_components = MagicMock()
+        self.compiler.src_wares = MagicMock()
+        self.compiler.old_wares = MagicMock()
+        self.compiler.read_xml = MagicMock()
+        self.compiler.write_xml = MagicMock()
+        self.compiler.update_xml = MagicMock()
+        self.compiler.clone = MagicMock()
+        self.compiler.mod_macros = MagicMock()
+        self.compiler.mod_components = MagicMock()
+        self.compiler.mod_wares = MagicMock()
 
     def test_prep_row(self):
         row = {
@@ -41,7 +42,7 @@ class CompileModUnitTest(TestCase):
         ware_type = 'ship'
         page_ts = []
 
-        self.assertEqual(prep_row(row, page_id, t_id, ware_type, page_ts), t_id+4)
+        self.assertEqual(self.compiler.prep_row(row, page_id, t_id, ware_type, page_ts), t_id+4)
 
         self.assertEqual(page_ts, [
             (t_id, row['name']),
@@ -66,114 +67,25 @@ class CompileModUnitTest(TestCase):
             't_shortvariation_id': t_id+3,
         })
 
-    @patch('compile_mod.write_xml')
-    @patch('compile_mod.update_xml')
-    @patch('compile_mod.read_xml')
-    @patch('compile_mod.read_src')
-    def test_compile_macro(self, patch_read_src, patch_read_xml, patch_update_xml, patch_write_xml):
-        mod = MagicMock(mod_name='mod-name')
-        mod_path = 'path/to/mod-name/mod/ships/'
-        rel_path = '/mod/ships/'
-        mapping = MagicMock()
-        row = {
-            'macro_id': 'some_macro',
-            'base_macro': 'some_base_macro'
-        }
-        mod_xml_filename = 'path/to/mod-name/mod/ships/some_macro.xml'
-        src_xml = patch_read_src.return_value
-        mod_xml = patch_read_xml.return_value
+    def test_write_index_file(self):
+        filename = MagicMock()
+        entries = [
+            ('blah-macro', 'mod/path/to/blah-macro'),
+            ('blah-2-macro', 'mod/path/to/blah-2-macro'),
+        ]
+        root = self.compiler.write_index_file(filename, entries=entries)
+        root_str = ET.tostring(root, encoding='unicode')
+        self.assertEqual(
+            root_str,
+            '<diff>\n'
+            '<add sel="/index">\n'
+            '<entry name="blah-macro" value="mod/path/to/blah-macro" />\n'
+            '<entry name="blah-2-macro" value="mod/path/to/blah-2-macro" />\n'
+            '</add>\n'
+            '</diff>\n'
+        )
 
-        self.assertEqual(compile_macro(mod=mod, row=row, mod_path=mod_path, rel_path=rel_path, mapping=mapping),
-                         src_xml)
-        patch_read_src.assert_called_once_with(mod.src_macros.get.return_value, src_path=mod.src_path)
-        patch_read_xml.assert_called_once_with(mod_xml_filename, allow_fail=True)
-        patch_update_xml.assert_called_once_with(xml=mod_xml, mapping=mapping, row=row, label='mod_macro')
-        patch_write_xml.assert_called_once_with(filename=mod_xml_filename, xml=mod_xml)
-        mod.mod_macros.append.assert_called_once_with(('some_macro', 'extensions/mod-name/mod/ships/some_macro'))
-
-    @patch('compile_mod.deepcopy')
-    @patch('compile_mod.write_xml')
-    @patch('compile_mod.update_xml')
-    @patch('compile_mod.read_xml')
-    @patch('compile_mod.read_src')
-    def test_compile_macro_no_mod_xml(self, patch_read_src, patch_read_xml, patch_update_xml, patch_write_xml,
-                                      patch_deepcopy):
-        # if no existing xml exists for mod, src xml file is used as template
-        mod = MagicMock(mod_name='mod-name')
-        mod_path = 'path/to/mod-name/mod/ships/'
-        rel_path = '/mod/ships/'
-        mapping = MagicMock()
-        row = {
-            'macro_id': 'some_macro',
-            'base_macro': 'some_base_macro'
-        }
-        mod_xml_filename = 'path/to/mod-name/mod/ships/some_macro.xml'
-        patch_read_xml.return_value = None  # pulling existing mod xml, returns nothing in this test, so src should pull
-        src_xml = patch_read_src.return_value
-        mod_xml = patch_deepcopy.return_value
-
-        self.assertEqual(compile_macro(mod=mod, row=row, mod_path=mod_path, rel_path=rel_path, mapping=mapping),
-                         src_xml)
-        patch_read_src.assert_called_once_with(mod.src_macros.get.return_value, src_path=mod.src_path)
-        patch_read_xml.assert_called_once_with(mod_xml_filename, allow_fail=True)
-        patch_deepcopy.assert_called_once_with(src_xml)  # mod_xml = deepcopy(src_xml)
-        patch_update_xml.assert_called_once_with(xml=mod_xml, mapping=mapping, row=row, label='mod_macro')
-        patch_write_xml.assert_called_once_with(filename=mod_xml_filename, xml=mod_xml)
-        mod.mod_macros.append.assert_called_once_with(('some_macro', 'extensions/mod-name/mod/ships/some_macro'))
-
-    @patch('compile_mod.write_xml')
-    @patch('compile_mod.update_xml')
-    @patch('compile_mod.read_xml')
-    @patch('compile_mod.read_src')
-    def test_compile_component(self, patch_read_src, patch_read_xml, patch_update_xml, patch_write_xml):
-        mod = MagicMock(mod_name='mod-name')
-        mod_path = 'path/to/mod-name/mod/ships/'
-        rel_path = '/mod/ships/'
-        mapping = MagicMock()
-        base_component_id = MagicMock()
-        row = {
-            'component_id': 'some_comp',
-        }
-        mod_xml_filename = 'path/to/mod-name/mod/ships/some_comp.xml'
-        mod_xml = patch_read_xml.return_value
-
-        compile_component(mod=mod, row=row, base_component_id=base_component_id,
-                          mod_path=mod_path, rel_path=rel_path, mapping=mapping)
-
-        self.assertEqual(patch_read_src.call_count, 0)
-        patch_read_xml.assert_called_once_with(mod_xml_filename, allow_fail=True)
-        patch_update_xml.assert_called_once_with(xml=mod_xml, mapping=mapping, row=row, label='mod_component')
-        patch_write_xml.assert_called_once_with(filename=mod_xml_filename, xml=mod_xml)
-        mod.mod_components.append.assert_called_once_with(('some_comp', 'extensions/mod-name/mod/ships/some_comp'))
-
-    @patch('compile_mod.write_xml')
-    @patch('compile_mod.update_xml')
-    @patch('compile_mod.read_xml')
-    @patch('compile_mod.read_src')
-    def test_compile_component_no_mod_xml(self, patch_read_src, patch_read_xml, patch_update_xml, patch_write_xml):
-        mod = MagicMock(mod_name='mod-name')
-        mod_path = 'path/to/mod-name/mod/ships/'
-        rel_path = '/mod/ships/'
-        patch_read_xml.return_value = None  # pulling existing mod xml, returns nothing in this test, so src should pull
-        mapping = MagicMock()
-        base_component_id = MagicMock()
-        row = {
-            'component_id': 'some_comp',
-        }
-        mod_xml_filename = 'path/to/mod-name/mod/ships/some_comp.xml'
-        src_xml = patch_read_src.return_value
-
-        compile_component(mod=mod, row=row, base_component_id=base_component_id,
-                          mod_path=mod_path, rel_path=rel_path, mapping=mapping)
-
-        patch_read_src.assert_called_once_with(mod.src_components.get.return_value, src_path=mod.src_path)
-        patch_read_xml.assert_called_once_with(mod_xml_filename, allow_fail=True)
-        patch_update_xml.assert_called_once_with(xml=src_xml, mapping=mapping, row=row, label='mod_component')
-        patch_write_xml.assert_called_once_with(filename=mod_xml_filename, xml=src_xml)
-        mod.mod_components.append.assert_called_once_with(('some_comp', 'extensions/mod-name/mod/ships/some_comp'))
-
-    @patch('compile_mod.write_xml')
-    def test_write_ts_file(self, patch_write_xml):
+    def test_write_ts_file(self):
         filename = MagicMock()
         pages = {
             '1001': [
@@ -185,6 +97,373 @@ class CompileModUnitTest(TestCase):
                 (10002, 'PAC'),
             ],
         }
-        root = write_ts_file(filename, pages)
+        root = self.compiler.write_ts_file(filename, pages=pages)
         root_str = ET.tostring(root, encoding='unicode')
-        self.assertEqual(root_str, '<language id="44">\n<page id="1001">\n<t id="10001">Pegasus X</t>\n<t id="10002">Pegasus</t>\n</page>\n<page id="1002">\n<t id="10001">IRE</t>\n<t id="10002">PAC</t>\n</page>\n</language>\n')
+        self.assertEqual(
+            root_str,
+            '<language id="44">\n'
+            '<page id="1001">\n'
+            '<t id="10001">Pegasus X</t>\n'
+            '<t id="10002">Pegasus</t>\n'
+            '</page>\n<page id="1002">\n'
+            '<t id="10001">IRE</t>\n'
+            '<t id="10002">PAC</t>\n'
+            '</page>\n'
+            '</language>\n'
+        )
+
+    def test_write_wares_file(self):
+        filename = MagicMock()
+        wares = {
+            ET.fromstring('<ware id="some-ware">...</ware>'),
+            ET.fromstring('<ware id="some-ware">...</ware>'),
+            ET.fromstring('<ware id="some-ware">...</ware>'),
+        }
+        root = self.compiler.write_wares_file(filename, wares=wares)
+        root_str = ET.tostring(root, encoding='unicode')
+        self.assertEqual(
+            root_str,
+            '<diff>\n'
+            '<add sel="/wares">\n'
+            '<ware id="some-ware">...</ware>'
+            '<ware id="some-ware">...</ware>'
+            '<ware id="some-ware">...</ware>'
+            '</add>\n'
+            '</diff>\n'
+        )
+
+    @patch('compile_mod.csv')
+    @patch('builtins.open')
+    def test_csv_data(self, patch_open, patch_csv):
+        ware_type = 'shield'
+        self.assertEqual(self.compiler.csv_data(ware_type), patch_csv.DictReader.return_value)
+        patch_csv.DictReader.assert_called_once_with(patch_open.return_value)
+        patch_open.assert_called_once_with(self.compiler.mod_path+'/{}s.csv'.format(ware_type))
+
+    def test_read_src(self):
+        name = 'assets/units/size_s/ship_par_s_scout_01_b_macro'
+        src_path = 'path/to/src'
+        self.compiler.read_src(name=name)
+        self.compiler.read_xml.assert_called_once_with(
+            'path/to/src/assets/units/size_s/ship_par_s_scout_01_b_macro.xml', allow_fail=False)
+
+    def test_read_src_allow_fail(self):
+        name = 'assets/units/size_s/ship_par_s_scout_01_b_macro'
+        src_path = 'path/to/src'
+        self.compiler.read_src(name=name, allow_fail=True)
+        self.compiler.read_xml.assert_called_once_with(
+            'path/to/src/assets/units/size_s/ship_par_s_scout_01_b_macro.xml', allow_fail=True)
+
+    def test_compile_xml(self):
+        self.compiler.read_src = MagicMock()
+        src_xml = self.compiler.read_src.return_value
+        mod_xml = self.compiler.read_xml.return_value
+        mapping = MagicMock()
+        row = MagicMock()
+        mod_path = 'path/to/modname/mod/type/'
+        rel_path = '/mod/type/'
+        src_xml_path = 'assets/../some_src_macro'
+        mod_id = 'some_mod_macro'
+        mod_xml_filename = mod_path + mod_id + '.xml'
+        self.assertEqual(
+            self.compiler.compile_xml(row=row, mod_path=mod_path, rel_path=rel_path, src_xml_path=src_xml_path,
+                                      mapping=mapping, mod_id=mod_id),
+            (src_xml, (mod_id, 'extensions/{}{}{}'.format(self.compiler.mod_name, rel_path, mod_id)))
+        )
+        self.compiler.read_src.assert_called_once_with(src_xml_path)
+        self.compiler.read_xml.assert_called_once_with(mod_xml_filename, allow_fail=True)
+        self.compiler.update_xml.assert_called_once_with(xml=mod_xml, mapping=mapping, row=row,
+                                                         label='compile_xml:' + mod_id)
+        self.compiler.write_xml.assert_called_once_with(filename=mod_xml_filename, xml=mod_xml)
+
+    def test_compile_xml_no_mod_xml(self):
+        self.compiler.read_src = MagicMock()
+        src_xml = self.compiler.read_src.return_value
+        self.compiler.read_xml.return_value = None
+        src_clone_xml = self.compiler.clone.return_value
+        mapping = MagicMock()
+        row = MagicMock()
+        mod_path = 'path/to/modname/mod/type/'
+        rel_path = '/mod/type/'
+        src_xml_path = 'assets/../some_src_macro'
+        mod_id = 'some_mod_macro'
+        mod_xml_filename = mod_path + mod_id + '.xml'
+        self.assertEqual(
+            self.compiler.compile_xml(row=row, mod_path=mod_path, rel_path=rel_path, src_xml_path=src_xml_path,
+                                      mapping=mapping, mod_id=mod_id),
+            (src_xml, (mod_id, 'extensions/{}{}{}'.format(self.compiler.mod_name, rel_path, mod_id)))
+        )
+        self.compiler.read_src.assert_called_once_with(src_xml_path)
+        self.compiler.read_xml.assert_called_once_with(mod_xml_filename, allow_fail=True)
+        self.compiler.clone.assert_called_once_with(src_xml)
+        self.compiler.update_xml.assert_called_once_with(xml=src_clone_xml, mapping=mapping, row=row,
+                                                         label='compile_xml:' + mod_id)
+        self.compiler.write_xml.assert_called_once_with(filename=mod_xml_filename, xml=src_clone_xml)
+
+    def test_compile_macro(self):
+        self.compiler.compile_xml = MagicMock()
+        src_xml, mod_data = self.compiler.compile_xml.return_value = (MagicMock(), MagicMock())
+        mod_path = 'path/to/mod-name/mod/ships/'
+        rel_path = '/mod/ships/'
+        src_xml_path = 'src/path/to/some_base_macro'
+        mapping = MagicMock()
+        row = {
+            'macro_id': 'some_macro',
+            'base_macro': 'some_base_macro'
+        }
+        self.compiler.src_macros = {'some_base_macro': src_xml_path}
+        self.assertEqual(self.compiler.compile_macro(row=row, mod_path=mod_path, rel_path=rel_path, mapping=mapping),
+                         src_xml)
+        self.compiler.compile_xml.assert_called_once_with(row=row, mod_path=mod_path, rel_path=rel_path,
+                                                          src_xml_path=src_xml_path, mapping=mapping,
+                                                          mod_id='some_macro')
+        self.compiler.mod_macros.append.assert_called_once_with(mod_data)
+
+    def test_compile_macro_alt_keys(self):
+        # when processing sub object macros, you might have to override the macro id and base
+        # (eg. for weapons you have the main weapon macro and base, but also need to mod bullet macro(
+        self.compiler.compile_xml = MagicMock()
+        src_xml, mod_data = self.compiler.compile_xml.return_value = (MagicMock(), MagicMock())
+        mod_path = 'path/to/mod-name/mod/ships/'
+        rel_path = '/mod/ships/'
+        src_xml_path = 'src/path/to/some_base_macro'
+        mapping = MagicMock()
+        row = {
+            'macro_id': 'some_macro',
+            'base_macro': 'some_base_macro',
+            'other_macro_id': 'some_other_macro',
+            'other_base_macro_id': 'some_other_base_macro',
+        }
+        self.compiler.src_macros = {'some_other_base_macro': src_xml_path}
+        self.assertEqual(self.compiler.compile_macro(row=row, mod_path=mod_path, rel_path=rel_path, mapping=mapping,
+                                                     id_key='other_macro_id', base_key='other_base_macro_id'),
+                         src_xml)
+        self.compiler.compile_xml.assert_called_once_with(row=row, mod_path=mod_path, rel_path=rel_path,
+                                                          src_xml_path=src_xml_path, mapping=mapping,
+                                                          mod_id='some_other_macro')
+        self.compiler.mod_macros.append.assert_called_once_with(mod_data)
+
+    def test_compile_component(self):
+        self.compiler.compile_xml = MagicMock()
+        src_xml, mod_data = self.compiler.compile_xml.return_value = (MagicMock(), MagicMock())
+        mod_path = 'path/to/mod-name/mod/ships/'
+        rel_path = '/mod/ships/'
+        src_xml_path = 'src/path/to/some_base_comp'
+        mapping = MagicMock()
+        row = {
+            'component_id': 'some_comp',
+        }
+        base_component_id = 'src_some_comp'
+        self.compiler.src_components = {base_component_id: src_xml_path}
+        self.assertEqual(
+            self.compiler.compile_component(row=row, base_component_id=base_component_id,
+                                            mod_path=mod_path, rel_path=rel_path, mapping=mapping),
+            src_xml)
+        self.compiler.compile_xml.assert_called_once_with(row=row, mod_path=mod_path, rel_path=rel_path,
+                                                          src_xml_path=src_xml_path, mapping=mapping,
+                                                          mod_id='some_comp')
+        self.compiler.mod_components.append.assert_called_once_with(mod_data)
+
+    def test_compile_ware(self):
+        row = {
+            'macro_id': 'some_macro',
+            'base_macro': 'some_base_macro',
+        }
+        self.compiler.compile_ware(row)
+        ware = self.compiler.old_wares.find.return_value
+        self.compiler.old_wares.find.assert_called_once_with('./add/ware/component[@ref="some_macro"]/..')
+        self.compiler.update_xml.assert_called_once_with(xml=ware, mapping=self.compiler.WARE_MAPPINGS['ware'],
+                                                         row=row, label='mod_ware')
+        self.compiler.mod_wares.append.assert_called_once_with(ware)
+
+    def test_compile_ware_no_mod_ware(self):
+        # when there is no existing mod ware, use the one from base/src macro
+        row = {
+            'macro_id': 'some_macro',
+            'base_macro': 'some_base_macro',
+        }
+        self.compiler.old_wares = None
+        self.compiler.compile_ware(row)
+        ware = self.compiler.clone.return_value
+        self.compiler.clone.assert_called_once_with(self.compiler.src_wares.find.return_value)
+        self.compiler.src_wares.find.assert_called_once_with('./ware/component[@ref="some_base_macro"]/..')
+        self.compiler.update_xml.assert_called_once_with(xml=ware, mapping=MAPPINGS['ware'], row=row, label='mod_ware')
+        self.compiler.mod_wares.append.assert_called_once_with(ware)
+
+    def test_compile_ware_type(self):
+        self.compiler.csv_data = MagicMock()
+        self.compiler.csv_data.return_value = rows = [
+            MagicMock(), MagicMock()
+        ]
+        self.compiler.prep_row = MagicMock(return_value=100010)
+        self.compiler.compile_ware = MagicMock()
+        self.compiler.compile_macro = MagicMock()
+        src_macros = self.compiler.compile_macro.side_effect = [MagicMock(), MagicMock()]
+        self.compiler.compile_component = MagicMock()
+
+        ware_type = 'shield'
+        page_id = 10001
+        self.compiler.compile_ware_type(ware_type=ware_type, page_id=page_id)
+        self.assertEqual(self.compiler.mod_ts, {page_id: []})
+        self.compiler.csv_data.assert_called_once_with(ware_type)
+        self.compiler.prep_row.assert_has_calls([
+            call(rows[0], page_id, 100000, ware_type, []),
+            call(rows[1], page_id, 100010, ware_type, []),
+        ])
+        self.compiler.compile_ware.assert_has_calls([
+            call(rows[0]),
+            call(rows[1]),
+        ])
+        mod_path = self.compiler.mod_path+'/mod/{}s/'.format(ware_type)
+        rel_path = '/mod/{}s/'.format(ware_type)
+
+        macro_mapping = self.compiler.WARE_MAPPINGS[ware_type]['macro']
+        component_mapping = self.compiler.WARE_MAPPINGS[ware_type]['component']
+
+        self.compiler.compile_macro.assert_has_calls([
+            call(row=rows[0], mod_path=mod_path, rel_path=rel_path, mapping=macro_mapping),
+            call(row=rows[1], mod_path=mod_path, rel_path=rel_path, mapping=macro_mapping),
+        ])
+        self.compiler.compile_component.assert_has_calls([
+            call(row=rows[0], mod_path=mod_path, rel_path=rel_path, mapping=component_mapping,
+                 base_component_id=src_macros[0].find.return_value.get.return_value),
+            call(row=rows[1], mod_path=mod_path, rel_path=rel_path, mapping=component_mapping,
+                 base_component_id=src_macros[1].find.return_value.get.return_value),
+        ])
+        src_macros[0].find.assert_called_once_with('./macro/component')
+        src_macros[0].find.return_value.get.assert_called_once_with('ref')
+        src_macros[1].find.assert_called_once_with('./macro/component')
+        src_macros[1].find.return_value.get.assert_called_once_with('ref')
+
+    def test_compile_ware_type_with_additional_compile(self):
+        # additional compile allows an extra compile function for additional processing of row
+        # in particular used to process bullet macro on a weapon macro row
+        self.compiler.csv_data = MagicMock()
+        self.compiler.csv_data.return_value = rows = [
+            MagicMock(), MagicMock()
+        ]
+        self.compiler.prep_row = MagicMock(return_value=100010)
+        self.compiler.compile_ware = MagicMock()
+        self.compiler.compile_macro = MagicMock()
+        src_macros = self.compiler.compile_macro.side_effect = [MagicMock(), MagicMock()]
+        self.compiler.compile_component = MagicMock()
+
+        additional_compile = MagicMock()
+
+        ware_type = 'weapon'
+        page_id = 10001
+
+        self.compiler.compile_ware_type(ware_type=ware_type, page_id=page_id, additional_compile=additional_compile)
+
+        self.assertEqual(self.compiler.mod_ts, {page_id: []})
+        self.compiler.csv_data.assert_called_once_with(ware_type)
+        self.compiler.prep_row.assert_has_calls([
+            call(rows[0], page_id, 100000, ware_type, []),
+            call(rows[1], page_id, 100010, ware_type, []),
+        ])
+        self.compiler.compile_ware.assert_has_calls([
+            call(rows[0]),
+            call(rows[1]),
+        ])
+        mod_path = self.compiler.mod_path+'/mod/{}s/'.format(ware_type)
+        rel_path = '/mod/{}s/'.format(ware_type)
+
+        macro_mapping = self.compiler.WARE_MAPPINGS[ware_type]['macro']
+        component_mapping = self.compiler.WARE_MAPPINGS[ware_type]['component']
+
+        self.compiler.compile_macro.assert_has_calls([
+            call(row=rows[0], mod_path=mod_path, rel_path=rel_path, mapping=macro_mapping),
+            call(row=rows[1], mod_path=mod_path, rel_path=rel_path, mapping=macro_mapping),
+        ])
+        self.compiler.compile_component.assert_has_calls([
+            call(row=rows[0], mod_path=mod_path, rel_path=rel_path, mapping=component_mapping,
+                 base_component_id=src_macros[0].find.return_value.get.return_value),
+            call(row=rows[1], mod_path=mod_path, rel_path=rel_path, mapping=component_mapping,
+                 base_component_id=src_macros[1].find.return_value.get.return_value),
+        ])
+        src_macros[0].find.assert_called_once_with('./macro/component')
+        src_macros[0].find.return_value.get.assert_called_once_with('ref')
+        src_macros[1].find.assert_called_once_with('./macro/component')
+        src_macros[1].find.return_value.get.assert_called_once_with('ref')
+
+        additional_compile.assert_has_calls([
+            call(row=rows[0], mod_path=mod_path, rel_path=rel_path, src_macro=src_macros[0]),
+            call(row=rows[1], mod_path=mod_path, rel_path=rel_path, src_macro=src_macros[1]),
+        ])
+
+    def test_compile_weapon_bullet(self):
+        self.compiler.compile_macro = MagicMock()
+        row = {
+            'id': 'some_weapon',
+        }
+        src_macro = MagicMock()
+        ware_type = 'weapon'
+        mod_path = self.compiler.mod_path+'/mod/{}s/'.format(ware_type)
+        rel_path = '/mod/{}s/'.format(ware_type)
+        self.compiler.compile_weapon_bullet(row=row, src_macro=src_macro, mod_path=mod_path, rel_path=rel_path)
+        self.assertEqual(row, {
+            'id': 'some_weapon',
+            'bullet_macro_id': 'bullet_some_weapon_macro',
+            'src_bullet_macro_id': src_macro.find.return_value.get.return_value,
+        })
+        self.compiler.compile_macro.assert_called_once_with(
+            row=row, mod_path=mod_path, rel_path=rel_path,
+            mapping=self.compiler.WARE_MAPPINGS['weapon']['bullet_macro'],
+            id_key='bullet_macro_id', base_key='src_bullet_macro_id')
+
+    def test_compile(self):
+        self.compiler.mod_ts = MagicMock()
+        self.compiler.compile_ware_type = MagicMock()
+        self.compiler.write_index_file = MagicMock()
+        self.compiler.write_ts_file = MagicMock()
+        self.compiler.write_wares_file = MagicMock()
+
+        self.compiler.compile()
+
+        self.compiler.compile_ware_type.assert_has_calls([
+            call(ware_type='weapon', page_id=20105, additional_compile=self.compiler.compile_weapon_bullet),
+            call(ware_type='shield', page_id=20106),
+            call(ware_type='ship', page_id=20101),
+        ])
+
+        self.compiler.write_index_file.assert_has_calls([
+            call(self.compiler.mod_path+'/index/macros.xml', self.compiler.mod_macros),
+            call(self.compiler.mod_path+'/index/components.xml', self.compiler.mod_components),
+        ])
+        self.compiler.write_ts_file.assert_called_once_with(
+            self.compiler.mod_path+'/t/0001-L044.xml', self.compiler.mod_ts)
+        self.compiler.write_wares_file.assert_called_once_with(
+            self.compiler.mod_path+'/libraries/wares.xml', self.compiler.mod_wares)
+
+    @patch('compile_mod.X4ModCompiler.get_wares')
+    @patch('compile_mod.X4ModCompiler.get_components')
+    @patch('compile_mod.X4ModCompiler.get_macros')
+    def test_init(self, patch_get_macros, patch_get_components, patch_get_wares):
+        src_wares, old_wares = patch_get_wares.side_effect = [MagicMock(), MagicMock()]
+        mod_name = 'my-mod-name'
+        config = MagicMock(MODS='path/to/mods')
+        mod_path = config.MODS + '/' + mod_name
+        compiler = X4ModCompiler(name=mod_name, config=config)
+        patch_get_macros.assert_called_once_with(src_path=config.SRC)
+        patch_get_components.assert_called_once_with(src_path=config.SRC)
+        patch_get_wares.assert_has_calls([
+            call(src_path=config.SRC),
+            call(src_path=mod_path, allow_fail=True),
+        ])
+        self.assertEqual(compiler.mod_name, mod_name)
+        self.assertEqual(compiler.mod_components, [])
+        self.assertEqual(compiler.mod_macros, [])
+        self.assertEqual(compiler.mod_ts, {})
+        self.assertEqual(compiler.mod_wares, [])
+        self.assertEqual(compiler.mod_path, mod_path)
+        self.assertEqual(compiler.src_path, config.SRC)
+        self.assertEqual(compiler.src_macros, patch_get_macros.return_value)
+        self.assertEqual(compiler.src_components, patch_get_components.return_value)
+        self.assertEqual(compiler.src_wares, src_wares)
+        self.assertEqual(compiler.old_wares, old_wares)
+
+
+
+
+
+
