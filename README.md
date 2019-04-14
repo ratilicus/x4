@@ -63,42 +63,42 @@ updating the macro and component values with the ones in the csv file.
 
 ###### Modding Steps
 
-Step 1: Create config.py
-run `./setup.sh`
-(this should create a config.py with paths for present dir, game dir, src dir, mods dir)
+- Step 1: Create config.py
+  run `./setup.sh`
+  (this should create a config.py with paths for present dir, game dir, src dir, mods dir)
 
-Step 2: extract X4 scripts
-run `python3 extract_x4.py --extract`
-(this should extract all the scripts/xml from the game cats+dats into src/ dir)
+- Step 2: extract X4 scripts
+  run `python3 extract_x4.py --extract`
+  (this should extract all the scripts/xml from the game cats+dats into src/ dir)
 
-Step 3: make modifications
-use:
+- Step 3: make modifications
+  use:
     mods/rat/content.xml
     mods/rat/ships.csv
     mods/rat/weapons.csv
-as a templates to create your own mod
+  as a templates to create your own mod
 
-Step 4: compile mod
-run `python3 compile_mod.py {your mod name}`
-(this should read the csv files and copy the appropriate xml source files, 
- update them with values in csv, and place them in your mod dir.  
- It should create the index, libraries, mod, and t dirs and files in them)
+- Step 4: compile mod
+  run `python3 compile_mod.py {your mod name}`
+  (this should read the csv files and copy the appropriate xml source files, 
+   update them with values in csv, and place them in your mod dir.  
+   It should create the index, libraries, mod, and t dirs and files in them)
 
-Step 5: make more modifications if need be
-the csv files have limited changes, but you can make additional changes to your mod files
-(re-running compile mod should update csv values without losing your changes)
+- Step 5: make more modifications if need be
+  the csv files have limited changes, but you can make additional changes to your mod files
+  (re-running compile mod should update csv values without losing your changes)
 
-Step 6: pack your mod
-run `python3 pack_mod.py {mod name}`
-(this should take the files in your mods/{mod name}/, copy the files in root dir and
- pack the files in index, libraries, mod, and t dirs into your {game dir}/extensions/{mod name}/)
+- Step 6: pack your mod
+  run `python3 pack_mod.py {mod name}`
+  (this should take the files in your mods/{mod name}/, copy the files in root dir and
+   pack the files in index, libraries, mod, and t dirs into your {game dir}/extensions/{mod name}/)
 
-Step 7: run game and verify it works
-In the game in Extensions you should see the name of your mod.
-If there are any issues look at your Debug Log 
-(you can assign a key to it in Controls -> General -> Open Debug Log, you can open it without loading any saves, on game start)
-Note: if you add a ship or ware, it might not be in the Wharf/Shipyard you are docked at, it depends on the
-faction where it's available (this can be controlled in the libraries/wares.xml)
+- Step 7: run game and verify it works
+  In the game in Extensions you should see the name of your mod.
+  If there are any issues look at your Debug Log 
+  (you can assign a key to it in Controls -> General -> Open Debug Log, you can open it without loading any saves, on game start)
+  Note: if you add a ship or ware, it might not be in the Wharf/Shipyard you are docked at, it depends on the
+  faction where it's available (this can be controlled in the libraries/wares.xml)
 
 
 ###### Current Features
@@ -119,27 +119,29 @@ faction where it's available (this can be controlled in the libraries/wares.xml)
 - searching for base templates
 - add proper error handling and validation
 - add proper logging (partially implemented)
-- add complete unit test set (full coverage on main scripts)
+- add complete unit test set (full coverage on main scripts already implemented)
+- test setting up and using these mod scripts in Windows 10 
+  (in Win 10 ubuntu integration, scripts should work if setup correctly, setup.sh will probably not be able to find X4 dir as is)
 - add integration tests
 - add exporting of models (currently experimental xmf2obj.py)
 - add importing of models 
     - this might be limited to reshaping exported models without adding or removing vertices/faces/etc, 
-    (otherwise there might be issues with texture mapping, etc.)
+      (otherwise there might be issues with texture mapping, etc.)
     - even with this no new vertices/faces/etc limitation there is a big problem that most models consist of 4
-    separate model files (collision model, 3 level of detail models).  So applying reshaping of a model would
-    either require applying the exact same changes to 4 different files.  Or having an algorithm that would apply
-    the changes from one model to the rest of them.  The different level of detail files by their nature don't have
-    the same vertices (so that would be very difficult).
+      separate model files (collision model, 3 level of detail models).  So applying reshaping of a model would
+      either require applying the exact same changes to 4 different files.  Or having an algorithm that would apply
+      the changes from one model to the rest of them.  The different level of detail files by their nature don't have
+      the same vertices (so that would be very difficult).
 
 
 ###### Development setup
 
 Written and tested in the following environment
-OS:Written on Ubuntu 16.04
-PWD: ~/x4
-GAME DIR ~/.steam/.local/share/Steam/steamapps/common/X4 Foundations
-PYTHON3 VERSION: 3.5.2 (this can run most of the scripts)
-PYTHON3 VERSION: 3.6+ (required for the xmf2obj.py script)
+- OS:Written on Ubuntu 16.04
+- PWD: ~/x4
+- GAME DIR ~/.steam/.local/share/Steam/steamapps/common/X4 Foundations
+- PYTHON3 VERSION: 3.5.2 (this can run most of the scripts)
+- PYTHON3 VERSION: 3.6+ (required for the xmf2obj.py script)
 
 
 ###### Installation
@@ -147,6 +149,7 @@ PYTHON3 VERSION: 3.6+ (required for the xmf2obj.py script)
 - clone this repo
 - if you have ubuntu 16+ you should already have python3.5 installed
 - in a terminal in the repo dir run: `./setup.sh` which will try to auto detect your X4 game dir and create config.py
+- (optional) if ./setup.sh doesn't work, use `config.py.sample` to create your own `config.py` (adjust paths as necessary)
 - after this you should be able to run `python3 extract_x4.py --extract` to exract the game scripts for most modding
 - (optional) to extract all content, run `python3 extract_x4.py --extract --all` (this is necessary for xmf2obj.py)
 - (optional) if you plan on using xmf2obj.py script you will need to upgrade your python3 to 3.6+
@@ -156,10 +159,10 @@ PYTHON3 VERSION: 3.6+ (required for the xmf2obj.py script)
 - you can then run `python3 compile_mod.py {your-mod-name}` and in the mods/{your-mod-name} the script will create
   index, libraries, mod, t directories, and xml files in them (which you can further update as needed)
 - you can then run `python3 pack_mod.py {your-mod-name}` and in your game X4/extensions/ {your-mod-name} dir should
-be created with the content.xml file and ext_01.cat and ext_01.dat files, which is your packed mod
+  be created with the content.xml file and ext_01.cat and ext_01.dat files, which is your packed mod
 - you should be able to run your game after this and use your new content
 - if you plan to run the tests, you will need to create a virtualenv with python3.6, source it, and 
-`pip install -r requirements.txt`, then you can run `./run_tests.sh`
+  `pip install -r requirements.txt`, then you can run `./run_tests.sh`
 
 
 ###### Testing
