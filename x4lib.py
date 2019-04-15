@@ -2,7 +2,8 @@ import logging
 import os
 import os.path
 from copy import deepcopy
-import xml.etree.ElementTree as ET
+from xml.etree import ElementTree
+from struct import calcsize, Struct
 
 logger = logging.getLogger('x4.' + __name__)
 
@@ -23,13 +24,9 @@ class ModUtilMixin(object):
         return deepcopy(xml)
 
     @classmethod
-    def makedirs(cls, path):
-        os.makedirs(path, exist_ok=True)
-
-    @classmethod
     def read_xml(cls, filepath, allow_fail=False):
         try:
-            xml = ET.parse(filepath)
+            xml = ElementTree.parse(filepath)
         except Exception:
             if allow_fail:
                 logger.info('read_xml failed', extra=dict(filepath=filepath, allow_fail=allow_fail))
@@ -40,7 +37,7 @@ class ModUtilMixin(object):
 
     @classmethod
     def write_xml(cls, filename, xml):
-        cls.makedirs(os.path.dirname(filename))
+        os.makedirs(os.path.dirname(filename), exist_ok=True)
         with open(filename, 'wb') as of:
             xml.write(of, encoding='utf-8', xml_declaration=True)
 
@@ -77,3 +74,22 @@ class ModUtilMixin(object):
     def get_wares(cls, src_path, allow_fail=False):
         return cls.read_xml(src_path + '/libraries/wares.xml', allow_fail=allow_fail)
 
+
+class StructObjBaseMeta(type):
+    def __init__(cls, name, bases, namespace):
+        super(StructObjBaseMeta, cls).__init__(name, bases, namespace)
+        cls.fields = cls.fields.split(',')
+        cls.struct_len = calcsize(cls.struct_format)
+        cls.struct = Struct(cls.struct_format)
+
+
+class StructObjBase(object):
+    def __init__(self, stream, **kwargs):
+        self.__dict__ = {k: v for k, v in zip(self.fields, self.struct.unpack(stream.read(self.struct_len)))}
+        self.init(stream, **kwargs)
+
+    def __str__(self):
+        return '%s(%s)' % (self.__class__.__name__, ', '.join('%s=%r' % (f, v) for f, v in self.__dict__.items()))
+
+    def init(self, stream, **kwargs):
+        pass
