@@ -1,6 +1,6 @@
 *.pyc
 src*
-objs
+objs*
 env
 venv
 game
