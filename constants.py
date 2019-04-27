@@ -4,6 +4,25 @@ CSV to XML mappings
 
 
 MAPPINGS = {
+    'bullet': {
+        'component': [
+            ('./component', 'name', '{component_id}'),
+            ('./component/layers/layer/lights/*', 'r', '{red}'),
+            ('./component/layers/layer/lights/*', 'g', '{green}'),
+            ('./component/layers/layer/lights/*', 'b', '{blue}'),
+        ],
+        'macro': [
+            ('./macro', 'name', '{macro_id}'),
+            ('./macro/component', 'ref', '{component_id}'),
+            ('./macro/properties/bullet', 'speed', '{speed}'),
+            ('./macro/properties/bullet', 'lifetime', '{lifetime}'),
+            ('./macro/properties/bullet', 'heat', '{heat}'),
+            ('./macro/properties/bullet', 'reload', '{reload}'),
+            ('./macro/properties/bullet', 'damage', '{damage}'),
+            ('./macro/properties/bullet', 'shield', '{shield}'),
+            ('./macro/properties/bullet', 'repair', '{repair}'),
+        ],
+    },
     'weapon': {
         'component': [
             ('./component', 'name', '{component_id}'),
@@ -17,7 +36,7 @@ MAPPINGS = {
             ('./macro/properties/identification', 'shortname', '{{{page_id}, {t_shortname_id}}}'),
             ('./macro/properties/identification', 'description', '{{{page_id}, {t_description_id}}}'),
             ('./macro/properties/identification', 'mk', '{mk}'),
-            ('./macro/properties/bullet', 'class', 'bullet_{id}_macro'),
+            ('./macro/properties/bullet', 'class', '{bullet_macro}'),
             ('./macro/properties/heat', 'overheat', '{overheat}'),
             ('./macro/properties/heat', 'cooldelay', '{cooldelay}'),
             ('./macro/properties/heat', 'coolrate', '{coolrate}'),
@@ -25,16 +44,6 @@ MAPPINGS = {
             ('./macro/properties/rotationspeed', 'max', '{rotation_spd}'),
             ('./macro/properties/rotationacceleration', 'max', '{rotation_acc}'),
             ('./macro/properties/hull', 'max', '{hull}'),
-        ],
-        'bullet_macro': [
-            ('./macro', 'name', 'bullet_{id}_macro'),
-            ('./macro/properties/bullet', 'speed', '{bullet_speed}'),
-            ('./macro/properties/bullet', 'lifetime', '{bullet_lifetime}'),
-            ('./macro/properties/bullet', 'heat', '{bullet_heat}'),
-            ('./macro/properties/bullet', 'reload', '{bullet_reload}'),
-            ('./macro/properties/bullet', 'damage', '{bullet_damage}'),
-            ('./macro/properties/bullet', 'shield', '{bullet_shield}'),
-            ('./macro/properties/bullet', 'repair', '{bullet_repair}'),
         ],
     },
     'ship': {

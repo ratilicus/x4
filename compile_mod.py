@@ -20,19 +20,20 @@ class X4ModCompiler(ModUtilMixin):
     WARE_MAPPINGS = MAPPINGS
     T_NAMES_LIST = T_LIST
 
-    def prep_row(self, row, page_id, t_id, ware_type, page_ts):
+    def prep_row(self, row, page_id, t_id, ware_type, page_ts, has_ts=True):
         _id = row['id']
         row.update(
             macro_id='{ware}_{id}_macro'.format(ware=ware_type, id=_id),
             component_id='{ware}_{id}'.format(ware=ware_type, id=_id),
             page_id=page_id,
         )
-        for t_name in self.T_NAMES_LIST:
-            value = row.get(t_name, '')
-            if value:
-                row['t_{}_id'.format(t_name)] = t_id
-                page_ts.append((t_id, value))
-                t_id += 1
+        if has_ts:
+            for t_name in self.T_NAMES_LIST:
+                value = row.get(t_name, '')
+                if value:
+                    row['t_{}_id'.format(t_name)] = t_id
+                    page_ts.append((t_id, value))
+                    t_id += 1
         return t_id
 
     def write_index_file(self, filename, entries):
@@ -156,7 +157,7 @@ class X4ModCompiler(ModUtilMixin):
         self.update_xml(xml=ware, mapping=self.WARE_MAPPINGS['ware'], row=row, label='mod_ware')
         self.mod_wares.append(ware)
 
-    def compile_ware_type(self, ware_type, page_id, t_id=100000, additional_compile=None):
+    def compile_ware_type(self, ware_type, page_id, t_id=100000, additional_compile=None, has_ts=True, has_ware=True):
         rel_path = '/mod/{}s/'.format(ware_type)
         macro_mapping = self.WARE_MAPPINGS[ware_type]['macro']
         component_mapping = self.WARE_MAPPINGS[ware_type]['component']
@@ -165,8 +166,9 @@ class X4ModCompiler(ModUtilMixin):
         mod_path = self.mod_path+rel_path
         reader = self.csv_data(ware_type)
         for row in reader:
-            t_id = self.prep_row(row, page_id, t_id, ware_type, page_ts)
-            self.compile_ware(row)
+            t_id = self.prep_row(row, page_id, t_id, ware_type, page_ts, has_ts=has_ts)
+            if has_ware:
+                self.compile_ware(row)
             src_macro = self.compile_macro(row=row, mod_path=mod_path, rel_path=rel_path, mapping=macro_mapping)
             base_component_id = src_macro.find('./macro/component').get('ref')
             self.compile_component(row=row, base_component_id=base_component_id, mod_path=mod_path, rel_path=rel_path,
@@ -175,16 +177,9 @@ class X4ModCompiler(ModUtilMixin):
             if additional_compile is not None:
                 additional_compile(row=row, src_macro=src_macro, mod_path=mod_path, rel_path=rel_path)
 
-    def compile_weapon_bullet(self, row, src_macro, mod_path, rel_path):
-        # additional compile function for bullet macro compiling
-        row['bullet_macro_id'] = 'bullet_{id}_macro'.format(id=row['id'])
-        row['src_bullet_macro_id'] = src_macro.find('./macro/properties/bullet').get('class')
-        self.compile_macro(row=row, mod_path=mod_path, rel_path=rel_path,
-                           mapping=self.WARE_MAPPINGS['weapon']['bullet_macro'],
-                           id_key='bullet_macro_id', base_key='src_bullet_macro_id')
-
     def compile(self):
-        self.compile_ware_type(ware_type='weapon', page_id=20105, additional_compile=self.compile_weapon_bullet)
+        self.compile_ware_type(ware_type='bullet', page_id=20105, has_ts=False, has_ware=False)
+        self.compile_ware_type(ware_type='weapon', page_id=20105)
         self.compile_ware_type(ware_type='shield', page_id=20106)
         self.compile_ware_type(ware_type='ship', page_id=20101)
 
