@@ -307,8 +307,8 @@ class ModCompilerUnitTest(TestCase):
         self.assertEqual(self.compiler.mod_ts, {page_id: []})
         self.compiler.csv_data.assert_called_once_with(ware_type)
         self.compiler.prep_row.assert_has_calls([
-            call(rows[0], page_id, 100000, ware_type, []),
-            call(rows[1], page_id, 100010, ware_type, []),
+            call(rows[0], page_id, 100000, ware_type, [], has_ts=True),
+            call(rows[1], page_id, 100010, ware_type, [], has_ts=True),
         ])
         self.compiler.compile_ware.assert_has_calls([
             call(rows[0]),
@@ -358,8 +358,8 @@ class ModCompilerUnitTest(TestCase):
         self.assertEqual(self.compiler.mod_ts, {page_id: []})
         self.compiler.csv_data.assert_called_once_with(ware_type)
         self.compiler.prep_row.assert_has_calls([
-            call(rows[0], page_id, 100000, ware_type, []),
-            call(rows[1], page_id, 100010, ware_type, []),
+            call(rows[0], page_id, 100000, ware_type, [], has_ts=True),
+            call(rows[1], page_id, 100010, ware_type, [], has_ts=True),
         ])
         self.compiler.compile_ware.assert_has_calls([
             call(rows[0]),
@@ -391,26 +391,6 @@ class ModCompilerUnitTest(TestCase):
             call(row=rows[1], mod_path=mod_path, rel_path=rel_path, src_macro=src_macros[1]),
         ])
 
-    def test_compile_weapon_bullet(self):
-        self.compiler.compile_macro = MagicMock()
-        row = {
-            'id': 'some_weapon',
-        }
-        src_macro = MagicMock()
-        ware_type = 'weapon'
-        mod_path = self.compiler.mod_path+'/mod/{}s/'.format(ware_type)
-        rel_path = '/mod/{}s/'.format(ware_type)
-        self.compiler.compile_weapon_bullet(row=row, src_macro=src_macro, mod_path=mod_path, rel_path=rel_path)
-        self.assertEqual(row, {
-            'id': 'some_weapon',
-            'bullet_macro_id': 'bullet_some_weapon_macro',
-            'src_bullet_macro_id': src_macro.find.return_value.get.return_value,
-        })
-        self.compiler.compile_macro.assert_called_once_with(
-            row=row, mod_path=mod_path, rel_path=rel_path,
-            mapping=self.compiler.WARE_MAPPINGS['weapon']['bullet_macro'],
-            id_key='bullet_macro_id', base_key='src_bullet_macro_id')
-
     def test_compile(self):
         self.compiler.mod_ts = MagicMock()
         self.compiler.compile_ware_type = MagicMock()
@@ -421,7 +401,8 @@ class ModCompilerUnitTest(TestCase):
         self.compiler.compile()
 
         self.compiler.compile_ware_type.assert_has_calls([
-            call(ware_type='weapon', page_id=20105, additional_compile=self.compiler.compile_weapon_bullet),
+            call(ware_type='bullet', page_id=20105, has_ts=False, has_ware=False),
+            call(ware_type='weapon', page_id=20105),
             call(ware_type='shield', page_id=20106),
             call(ware_type='ship', page_id=20101),
         ])

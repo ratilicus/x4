@@ -1,6 +1,8 @@
 <?xml version='1.0' encoding='utf-8'?>
 <diff>
 <add sel="/index">
+<entry name="bullet_ire" value="extensions/rat/mod/bullets/bullet_ire" />
+<entry name="bullet_pac" value="extensions/rat/mod/bullets/bullet_pac" />
 <entry name="weapon_ire" value="extensions/rat/mod/weapons/weapon_ire" />
 <entry name="weapon_pac" value="extensions/rat/mod/weapons/weapon_pac" />
 <entry name="shield_sh2mj" value="extensions/rat/mod/shields/shield_sh2mj" />
