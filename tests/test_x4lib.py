@@ -3,10 +3,11 @@ Run tests
 Use: ./run_tests.sh
 """
 
+from io import BytesIO
 from unittest import TestCase
 from unittest.mock import patch, call, MagicMock
 
-from x4lib import get_config, ModUtilMixin
+from x4lib import get_config, ModUtilMixin, StructObjBaseMeta, StructObjBase
 
 
 class X4LibUnitTest(TestCase):
@@ -34,13 +35,13 @@ class ModUtilMixinUnitTest(TestCase):
         self.assertEqual(ModUtilMixin.clone(xml), patch_deepcopy.return_value)
         patch_deepcopy.assert_called_once_with(xml)
 
-    @patch('x4lib.ET')
+    @patch('x4lib.ElementTree')
     def test_read_xml(self, patch_ET):
         filepath = 'file-path'
         self.assertEqual(ModUtilMixin.read_xml(filepath=filepath), patch_ET.parse.return_value)
         patch_ET.parse.assert_called_once_with(filepath)
 
-    @patch('x4lib.ET')
+    @patch('x4lib.ElementTree')
     def test_read_xml_raises_error(self, patch_ET):
         patch_ET.parse.side_effect = Exception
         filepath = 'file-path'
@@ -48,7 +49,7 @@ class ModUtilMixinUnitTest(TestCase):
             ModUtilMixin.read_xml(filepath=filepath)
         patch_ET.parse.assert_called_once_with(filepath)
 
-    @patch('x4lib.ET')
+    @patch('x4lib.ElementTree')
     def test_read_xml_allow_faii(self, patch_ET):
         patch_ET.parse.side_effect = Exception
         filepath = 'file-path'
@@ -96,13 +97,16 @@ class ModUtilMixinUnitTest(TestCase):
         patch_read_xml.assert_called_once_with(src_path+'/libraries/wares.xml', allow_fail=True)
 
     @patch('builtins.open')
-    def test_write_xml(self, patch_open):
+    @patch('x4lib.os')
+    def test_write_xml(self, patch_os, patch_open):
         filename = 'path/to/filename'
         xml = MagicMock()
         ModUtilMixin.write_xml(filename, xml)
         patch_open.assert_called_once_with(filename, 'wb')
         xml.write.assert_called_once_with(
             patch_open.return_value.__enter__.return_value, encoding='utf-8', xml_declaration=True)
+        patch_os.path.dirname.assert_called_once_with(filename)
+        patch_os.makedirs.assert_called_once_with(patch_os.path.dirname.return_value, exist_ok=True)
 
     def test_set_xml(self):
         xml = MagicMock()
@@ -118,7 +122,7 @@ class ModUtilMixinUnitTest(TestCase):
         xml.find.return_value.set.assert_called_once_with(key, value_template.format.return_value)
         value_template.format.assert_called_once_with(**row)
 
-    @patch('x4lib.ET')
+    @patch('x4lib.ElementTree')
     def test_set_xml_find_fail(self, patch_ET):
         xml = MagicMock()
         xml.find.return_value = None
@@ -161,3 +165,41 @@ class ModUtilMixinUnitTest(TestCase):
             call(xml, mapping[0][0], mapping[0][1], mapping[0][2], row, label=label),
             call(xml, mapping[1][0], mapping[1][1], mapping[1][2], row, label=label),
         ])
+
+
+class StructObjUnitTest(TestCase):
+    def test_structobj(self):
+        class TestObj(StructObjBase, metaclass=StructObjBaseMeta):
+            fields = 'text,short,int'
+            struct_format = b'<3shi'
+
+        self.assertEqual(TestObj.struct_len, 3+2+4)
+        stream = BytesIO(b'ABC\x01\x00\x02\x00\x00\x00DEF\x03\x00\x04\x00\x00\x00')
+        obj = TestObj(stream, a=101, b=102)
+        self.assertEqual(obj.text, b'ABC')
+        self.assertEqual(obj.short, 1)
+        self.assertEqual(obj.int, 2)
+        self.assertEqual(str(obj), "TestObj(text=b'ABC', short=1, int=2)")
+
+    def test_structobj_with_init(self):
+        class TestObj(StructObjBase, metaclass=StructObjBaseMeta):
+            fields = 'text,short,int'
+            struct_format = b'<3shi'
+
+            def init(self, stream, **kwargs):
+                self.kwargs = kwargs
+
+        self.assertEqual(TestObj.struct_len, 3+2+4)
+        stream = BytesIO(b'ABC\x01\x00\x02\x00\x00\x00DEF\x03\x00\x04\x00\x00\x00')
+        obj = TestObj(stream, a=101, b=102)
+        self.assertEqual(obj.text, b'ABC')
+        self.assertEqual(obj.short, 1)
+        self.assertEqual(obj.int, 2)
+        self.assertEqual(obj.kwargs, {'a': 101, 'b': 102})
+        self.assertEqual(str(obj), "TestObj(text=b'ABC', short=1, int=2, kwargs={'a': 101, 'b': 102})")
+        obj = TestObj(stream, c=103)
+        self.assertEqual(obj.text, b'DEF')
+        self.assertEqual(obj.short, 3)
+        self.assertEqual(obj.int, 4)
+        self.assertEqual(obj.kwargs, {'c': 103})
+        self.assertEqual(str(obj), "TestObj(text=b'DEF', short=3, int=4, kwargs={'c': 103})")
