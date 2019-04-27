@@ -1,10 +1,10 @@
 <?xml version='1.0' encoding='utf-8'?>
 <macros>
-  <macro class="bullet" name="bullet_ire_macro">
-    <component ref="bullet_gen_s_laser_01_mk1" />
+  <macro class="bullet" name="bullet_pac_macro">
+    <component ref="bullet_pac" />
     <properties>
       <ammunition reload="0.5" value="2" />
-      <bullet amount="1" angle="0.25" attach="0" barrelamount="1" damage="26" heat="25" icon="weapon_laser_mk1" lifetime="0.75" maxhits="1" reload="14" repair="0" ricochet="0" scale="0" shield="" speed="4147" timediff="0.025" />
+      <bullet amount="1" angle="0.25" attach="0" barrelamount="1" damage="50" heat="50" icon="weapon_laser_mk1" lifetime="1.5" maxhits="1" reload="14" repair="0" ricochet="0" scale="0" shield="30" speed="2500" timediff="0.025" />
       <heat value="25" />
       <reload rate="14" />
       <damage repair="0" value="26" />

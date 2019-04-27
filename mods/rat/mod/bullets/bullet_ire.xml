@@ -1,0 +1,51 @@
+<?xml version='1.0' encoding='utf-8'?>
+<components>
+	<component class="bullet" name="bullet_ire">
+		<source geometry="assets\fx\weaponFx\bullet_gen_s_laser_01_mk1_data" />
+		<layers>
+			<layer>
+				<waypoints />
+				<lights>
+					<box b="0" g="0" intensity="3" lighteffect="1" name="XU BoxLight24" r="255" shadow="0" trigger="1">
+						<size x="58.4" y="33.39999" z="33.39999" />
+						<lightanimations />
+						<offset>
+							<position x="0" y="0" z="23.64658" />
+							<quaternion qw="-0.7071067" qx="-0" qy="0.7071068" qz="-0" />
+						</offset>
+					</box>
+				</lights>
+			</layer>
+		</layers>
+		<connections>
+			<connection name="container" optional="0" tags="contents" value="0" />
+			<connection name="position" optional="1" tags="position" value="1" />
+			<connection name="space" tags="bullet">
+				<offset />
+			</connection>
+			<connection name="Connection01" tags="part  ">
+				<offset>
+					<position x="0" y="0" z="46.82769" />
+				</offset>
+				<parts>
+					<part name="part_bullet">
+						<lods>
+							<lod index="0">
+								<materials>
+									<material id="1" ref="effects.bullets_fx_master" />
+								</materials>
+							</lod>
+						</lods>
+						<size>
+							<max x="0.1765572" y="0.1856432" z="22.61537" />
+							<center x="0.0131995" y="-1.400709E-06" z="-22.04721" />
+						</size>
+					</part>
+				</parts>
+			</connection>
+			<connection name="Connection_Laser01" tags="laser">
+				<offset />
+			</connection>
+		</connections>
+	</component>
+</components>
