@@ -3,8 +3,8 @@
   <macro class="shieldgenerator" name="shield_sh2mj_macro">
     <component ref="shield_sh2mj" />
     <properties>
-      <identification basename="{20106, 100001}" description="{20106, 100002}" makerrace="paranid" mk="1" name="{20106, 100000}" shortname="{20106, 100003}" />
-      <recharge delay="5.1" max="200" rate="100" />
+      <identification basename="{20106, 100005}" description="{20106, 100006}" makerrace="paranid" mk="1" name="{20106, 100004}" shortname="{20106, 100007}" />
+      <recharge delay="3.1" max="200" rate="200" />
       <hull integrated="1" />
     </properties>
   </macro>
