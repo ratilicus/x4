@@ -17,6 +17,7 @@ import os
 import zlib
 import glob
 from io import BytesIO
+from PIL import Image, ImageDraw
 from x4lib import get_config, StructObjBase, StructObjBaseMeta
 
 logger = logging.getLogger('x4.' + __name__)
@@ -219,6 +220,80 @@ class XMFReader(object):
                 elif FACE in chunk.data_class.flags:
                     self.write_chunk_faces(of, chunk)
 
+    def thumb(self):
+        img = Image.new("RGB", (900,315), "#FFFFFF")
+        draw = ImageDraw.Draw(img)
+        colors = [(((i*64621)**2) % 256, (((i*12415)**4) % 256), (((i*834793)*3) % 256)) for i in range(256)]
+
+        for c in range(0, 900//150*5):
+            i = c*(150.0/5)
+            draw.line([i,0,i,300], fill=(192,192,192))
+
+        for c in range(0, 300//150*5):
+            i = c*(150.0/5)
+            draw.line([0, i,900,i], fill=(192,192,192))
+
+        draw.line([0,150,900,150], fill=(0,0,0))
+        draw.line([150,0,150,300], fill=(0,0,0))
+        draw.line([450,0,450,300], fill=(0,0,0))
+        draw.line([750,0,750,300], fill=(0,0,0))
+
+        draw.line([300,0,300,300], fill=(255,255,255))
+        draw.line([600,0,600,300], fill=(255,255,255))
+
+        extents = [[0, 0, 0],[0, 0, 0],[0, 0, 0]]
+
+        vertices = self.chunks[0].data
+        faces = self.chunks[1].data
+
+        extent = 0.0
+        for v in vertices:
+            extents[0][0] = min(extents[0][0], v.x)
+            extents[0][1] = max(extents[0][1], v.x)
+            extents[1][0] = min(extents[1][0], v.y)
+            extents[1][1] = max(extents[1][1], v.y)
+            extents[2][0] = min(extents[2][0], v.z)
+            extents[2][1] = max(extents[2][1], v.z)
+            extent = max(extent, abs(v.x), abs(v.y), abs(v.z))
+
+        extents[0][2] = extents[0][1] - extents[0][0]
+        extents[1][2] = extents[1][1] - extents[1][0]
+        extents[2][2] = extents[2][1] - extents[2][0]
+
+        for mi, m in enumerate(self.materials):
+            try:
+                color = colors[mi]
+            except:
+                raise
+            for fi, f in enumerate(faces[m.start//3: m.start//3+m.count//3]):
+                verts = [vertices[f.i0], vertices[f.i1], vertices[f.i2]]
+
+                pos=[(150+150*v.x//extent, 150-150*v.y//extent) for v in verts]
+                draw.polygon(pos, fill=color)
+
+                pos=[(450+150*v.x//extent, 150+150*v.z//extent) for v in verts]
+                draw.polygon(pos, fill=color)
+
+                pos=[(750-150*v.y//extent, 150+150*v.z//extent) for v in verts]
+                draw.polygon(pos, fill=color)
+
+        s = 'SIZE: %0.1fm x %0.1fm x %0.1fm' % (
+            extents[0][2],
+            extents[1][2],
+            extents[2][2]
+        )
+        # s+= ' | SQR SIZE: %d (%0.1fm)' % (65536.0/5, 65536.0/5/500.0)
+        draw.text((3,303), s, fill=(0,0,0))
+
+        os.makedirs(f'{self.obj_path}/thumbs', exist_ok=True)
+        img.save(f'{self.obj_path}/thumbs/{self.file_dir}.gif', "GIF")
+
+        print(
+            round(extents[0][2], 1),
+            round(extents[1][2], 1),
+            round(extents[2][2], 1)
+        )
+
     def read(self):
         self.read_header()
         self.get_chunks()
@@ -257,6 +332,7 @@ if __name__ == '__main__':
                 reader = XMFReader(xmf_filename=filename, obj_path=config.OBJS)
                 try:
                     reader.read()
+                    reader.thumb()
                     print(f'processing {filename}.. successful!')
                 except Exception as e:
                     print(f'processing {filename}.. failed!')
@@ -279,3 +355,4 @@ if __name__ == '__main__':
             config = get_config()
             reader = XMFReader(xmf_filename=filename, obj_path=config.OBJS)
             reader.read()
+            reader.thumb()
