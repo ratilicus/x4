@@ -5,9 +5,12 @@
 <entry name="bullet_pac_macro" value="extensions/rat/mod/bullets/bullet_pac_macro" />
 <entry name="weapon_ire_macro" value="extensions/rat/mod/weapons/weapon_ire_macro" />
 <entry name="weapon_pac_macro" value="extensions/rat/mod/weapons/weapon_pac_macro" />
+<entry name="shield_sh1mj_macro" value="extensions/rat/mod/shields/shield_sh1mj_macro" />
 <entry name="shield_sh2mj_macro" value="extensions/rat/mod/shields/shield_sh2mj_macro" />
+<entry name="shield_sh3mj_macro" value="extensions/rat/mod/shields/shield_sh3mj_macro" />
 <entry name="shield_sh5mj_macro" value="extensions/rat/mod/shields/shield_sh5mj_macro" />
 <entry name="shield_sh25mj_macro" value="extensions/rat/mod/shields/shield_sh25mj_macro" />
 <entry name="ship_pegasus_macro" value="extensions/rat/mod/ships/ship_pegasus_macro" />
+<entry name="ship_pegasus2_macro" value="extensions/rat/mod/ships/ship_pegasus2_macro" />
 </add>
 </diff>

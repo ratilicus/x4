@@ -4,6 +4,7 @@ import os.path
 from copy import deepcopy
 from xml.etree import ElementTree
 from struct import calcsize, Struct
+import csv
 
 logger = logging.getLogger('x4.' + __name__)
 
@@ -73,6 +74,20 @@ class ModUtilMixin(object):
     @classmethod
     def get_wares(cls, src_path, allow_fail=False):
         return cls.read_xml(src_path + '/libraries/wares.xml', allow_fail=allow_fail)
+
+    @classmethod
+    def read_csv(cls, filename: str, csv_data: dict):
+        reader_rows = csv.reader(open(filename))
+        header = None
+        rows = None
+        for row in reader_rows:
+            col0 = row[0].strip().lower()
+            if col0.startswith('h'):
+                ware_type = col0[1:].lstrip()
+                header = [h for h in row[1:] if h != '']
+                rows = csv_data.setdefault(ware_type, [])
+            elif col0 == 'd':
+                rows.append({h: d for h, d in zip(header, row[1:])})
 
 
 class StructObjBaseMeta(type):

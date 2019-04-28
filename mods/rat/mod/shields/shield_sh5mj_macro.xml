@@ -3,7 +3,7 @@
   <macro class="shieldgenerator" name="shield_sh5mj_macro">
     <component ref="shield_sh5mj" />
     <properties>
-      <identification basename="{20106, 100005}" description="{20106, 100006}" makerrace="paranid" mk="1" name="{20106, 100004}" shortname="{20106, 100007}" />
+      <identification basename="{20106, 100013}" description="{20106, 100014}" makerrace="paranid" mk="1" name="{20106, 100012}" shortname="{20106, 100015}" />
       <recharge delay="7.2" max="500" rate="300" />
       <hull integrated="1" />
     </properties>
