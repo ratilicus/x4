@@ -187,6 +187,13 @@ class X4ModCompiler(ModUtilMixin):
         if ware is None:
             ware = self.clone(self.src_wares.find('./ware/component[@ref="{}"]/..'.format(row['base_macro'])))
         self.update_xml(xml=ware, mapping=self.WARE_MAPPINGS['ware'], row=row, label='mod_ware')
+
+        if 'factions' in row:
+            for el in ware.findall('./owner'):
+                ware.remove(el)
+            for faction in row['factions'].strip().split(' '):
+                ware.append(ET.Element('owner', faction=faction))
+
         self.mod_wares.append(ware)
 
     def get_ware_type_connections(self, ware_type):

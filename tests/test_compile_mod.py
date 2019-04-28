@@ -290,13 +290,17 @@ class ModCompilerUnitTest(TestCase):
         row = {
             'macro_id': 'some_macro',
             'base_macro': 'some_base_macro',
+            'factions': 'a b'
         }
+        ware = self.compiler.old_wares.find.return_value = ET.fromstring('<ware><owner faction="c" /></ware>')
         self.compiler.compile_ware(row)
-        ware = self.compiler.old_wares.find.return_value
         self.compiler.old_wares.find.assert_called_once_with('./add/ware/component[@ref="some_macro"]/..')
         self.compiler.update_xml.assert_called_once_with(xml=ware, mapping=self.compiler.WARE_MAPPINGS['ware'],
                                                          row=row, label='mod_ware')
         self.compiler.mod_wares.append.assert_called_once_with(ware)
+        self.assertEqual(
+            ET.tostring(ware),
+            b'<ware><owner faction="a" /><owner faction="b" /></ware>')
 
     def test_compile_ware_no_mod_ware(self):
         # when there is no existing mod ware, use the one from base/src macro
