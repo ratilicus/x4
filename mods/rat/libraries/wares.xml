@@ -41,8 +41,23 @@
     <owner faction="paranid" />
     <owner faction="teladi" />
   </ware>
-  <ware description="{20106, 100002}" group="shields" id="shield_sh2mj" name="{20106, 100000}" tags="equipment shield" transport="equipment" volume="1">
-    <price average="160" max="160" min="160" />
+  <ware description="{20106, 100002}" group="shields" id="shield_sh1mj" name="{20106, 100000}" tags="equipment shield" transport="equipment" volume="1">
+    <price average="100" max="100" min="100" />
+    <production amount="1" method="default" name="{20206,101}" time="10">
+      <primary>
+        <ware amount="5" ware="energycells" />
+        <ware amount="1" ware="shieldcomponents" />
+      </primary>
+    </production>
+    <component amount="1" ref="shield_sh1mj_macro" />
+    <restriction licence="generaluseequipment" />
+    <use threshold="0" />
+    <owner faction="alliance" />
+    <owner faction="holyorder" />
+    <owner faction="paranid" />
+  </ware>
+  <ware description="{20106, 100006}" group="shields" id="shield_sh2mj" name="{20106, 100004}" tags="equipment shield" transport="equipment" volume="1">
+    <price average="200" max="200" min="200" />
     <production amount="1" method="default" name="{20206,101}" time="10">
       <primary>
         <ware amount="5" ware="energycells" />
@@ -56,8 +71,23 @@
     <owner faction="holyorder" />
     <owner faction="paranid" />
   </ware>
-  <ware description="{20106, 100006}" group="shields" id="shield_sh5mj" name="{20106, 100004}" tags="equipment shield" transport="equipment" volume="1">
+  <ware description="{20106, 100010}" group="shields" id="shield_sh3mj" name="{20106, 100008}" tags="equipment shield" transport="equipment" volume="1">
     <price average="300" max="300" min="300" />
+    <production amount="1" method="default" name="{20206,101}" time="10">
+      <primary>
+        <ware amount="5" ware="energycells" />
+        <ware amount="1" ware="shieldcomponents" />
+      </primary>
+    </production>
+    <component amount="1" ref="shield_sh3mj_macro" />
+    <restriction licence="generaluseequipment" />
+    <use threshold="0" />
+    <owner faction="alliance" />
+    <owner faction="holyorder" />
+    <owner faction="paranid" />
+  </ware>
+  <ware description="{20106, 100014}" group="shields" id="shield_sh5mj" name="{20106, 100012}" tags="equipment shield" transport="equipment" volume="1">
+    <price average="500" max="500" min="500" />
     <production amount="1" method="default" name="{20206,101}" time="10">
       <primary>
         <ware amount="5" ware="energycells" />
@@ -71,7 +101,7 @@
     <owner faction="holyorder" />
     <owner faction="paranid" />
   </ware>
-  <ware description="{20106, 100010}" group="shields" id="shield_sh25mj" name="{20106, 100008}" tags="equipment shield" transport="equipment" volume="1">
+  <ware description="{20106, 100018}" group="shields" id="shield_sh25mj" name="{20106, 100016}" tags="equipment shield" transport="equipment" volume="1">
     <price average="1200" max="1200" min="1200" />
     <production amount="1" method="default" name="{20206,101}" time="10">
       <primary>
@@ -95,6 +125,18 @@
       </primary>
     </production>
     <component amount="1" ref="ship_pegasus_macro" />
+    <restriction licence="generaluseship" />
+    <owner faction="holyorder" />
+  </ware>
+  <ware description="{20101, 100007}" group="ships_paranid" id="ship_pegasus2" name="{20101, 100005}" tags="ship" transport="ship" volume="1">
+    <price average="2000" max="2000" min="2000" />
+    <production amount="1" method="default" name="{20206,101}" time="7">
+      <primary>
+        <ware amount="41" ware="energycells" />
+        <ware amount="90" ware="hullparts" />
+      </primary>
+    </production>
+    <component amount="1" ref="ship_pegasus2_macro" />
     <restriction licence="generaluseship" />
     <owner faction="holyorder" />
   </ware>

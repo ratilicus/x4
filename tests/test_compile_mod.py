@@ -132,20 +132,40 @@ class ModCompilerUnitTest(TestCase):
             '</diff>\n'
         )
 
-    @patch('compile_mod.csv')
-    @patch('builtins.open')
-    def test_csv_data(self, patch_open, patch_csv):
-        ware_type = 'shield'
-        self.assertEqual(self.compiler.csv_data(ware_type), patch_csv.DictReader.return_value)
-        patch_csv.DictReader.assert_called_once_with(patch_open.return_value)
-        patch_open.assert_called_once_with(self.compiler.mod_path+'/{}s.csv'.format(ware_type))
-
     def test_read_src(self):
         name = 'assets/units/size_s/ship_par_s_scout_01_b_macro'
         src_path = 'path/to/src'
         self.compiler.read_src(name=name)
         self.compiler.read_xml.assert_called_once_with(
             'path/to/src/assets/units/size_s/ship_par_s_scout_01_b_macro.xml', allow_fail=False)
+
+    def test_compile_connections(self):
+        xml = ET.fromstring('<components><component><connections/></component></components>')
+        connections = [
+            {'connection_name': 'conn_01', 'tags': 'some tags1', 'x': '1.0', 'y': '0.0', 'z': '-2.23', 'qx': '',
+             'qy': '', 'qz': '', 'qw': ''},
+            {'connection_name': 'conn_02', 'tags': 'some tags2', 'x': '', 'y': '', 'z': '', 'qx': '',
+             'qy': '', 'qz': '', 'qw': ''},
+            {'connection_name': 'conn_03', 'tags': 'some tags3', 'x': '', 'y': '', 'z': '', 'qx': '1',
+             'qy': '2', 'qz': '3', 'qw': '4'},
+            {'connection_name': 'conn_04', 'tags': 'some tags4', 'x': '1.1', 'y': '0.2', 'z': '-2.24', 'qx': '9',
+             'qy': '8', 'qz': '7', 'qw': '6'},
+        ]
+        self.compiler.compile_connections(xml, connections)
+        self.assertEqual(
+            ET.tostring(xml, encoding='unicode'),
+            '<components><component><connections>'
+            '<connection name="conn_01" tags="some tags1">\n'
+            '<offset>\n<position x="1.0" y="0.0" z="-2.23" />\n</offset>\n'
+            '</connection>\n'
+            '<connection name="conn_02" tags="some tags2">\n<offset>\n</offset>\n</connection>\n'
+            '<connection name="conn_03" tags="some tags3">\n'
+            '<offset>\n<quaternion qw="4" qx="1" qy="2" qz="3" />\n</offset>\n'
+            '</connection>\n'
+            '<connection name="conn_04" tags="some tags4">\n'
+            '<offset>\n<position x="1.1" y="0.2" z="-2.24" />\n<quaternion qw="6" qx="9" qy="8" qz="7" />\n</offset>\n'
+            '</connection>\n'
+            '</connections></component></components>')
 
     def test_read_src_allow_fail(self):
         name = 'assets/units/size_s/ship_par_s_scout_01_b_macro'
@@ -250,6 +270,7 @@ class ModCompilerUnitTest(TestCase):
         rel_path = '/mod/ships/'
         src_xml_path = 'src/path/to/some_base_comp'
         mapping = MagicMock()
+        connections = MagicMock()
         row = {
             'component_id': 'some_comp',
         }
@@ -257,11 +278,12 @@ class ModCompilerUnitTest(TestCase):
         self.compiler.src_components = {base_component_id: src_xml_path}
         self.assertEqual(
             self.compiler.compile_component(row=row, base_component_id=base_component_id,
-                                            mod_path=mod_path, rel_path=rel_path, mapping=mapping),
+                                            mod_path=mod_path, rel_path=rel_path, mapping=mapping,
+                                            connections=connections),
             src_xml)
         self.compiler.compile_xml.assert_called_once_with(row=row, mod_path=mod_path, rel_path=rel_path,
                                                           src_xml_path=src_xml_path, mapping=mapping,
-                                                          mod_id='some_comp')
+                                                          mod_id='some_comp', connections=connections)
         self.compiler.mod_components.append.assert_called_once_with(mod_data)
 
     def test_compile_ware(self):
@@ -290,22 +312,36 @@ class ModCompilerUnitTest(TestCase):
         self.compiler.update_xml.assert_called_once_with(xml=ware, mapping=MAPPINGS['ware'], row=row, label='mod_ware')
         self.compiler.mod_wares.append.assert_called_once_with(ware)
 
+    def test_ware_type_connections(self):
+        ware_type = 'some-ware-type'
+        conn = [
+            {'id': 'ship1', 'connection_name': 'c1'},
+            {'id': 'ship1', 'connection_name': 'c2'},
+            {'id': 'ship2', 'connection_name': 'c3'},
+        ]
+        self.compiler.csv_data = {
+            ware_type+'.conn': conn
+        }
+        self.assertEqual(self.compiler.get_ware_type_connections(ware_type), {
+            'ship1': conn[0:2],
+            'ship2': conn[2:3],
+        })
+
     def test_compile_ware_type(self):
-        self.compiler.csv_data = MagicMock()
-        self.compiler.csv_data.return_value = rows = [
+        ware_type = 'shield'
+        rows = [
             MagicMock(), MagicMock()
         ]
+        self.compiler.csv_data = {ware_type: rows}
         self.compiler.prep_row = MagicMock(return_value=100010)
         self.compiler.compile_ware = MagicMock()
         self.compiler.compile_macro = MagicMock()
         src_macros = self.compiler.compile_macro.side_effect = [MagicMock(), MagicMock()]
         self.compiler.compile_component = MagicMock()
 
-        ware_type = 'shield'
         page_id = 10001
         self.compiler.compile_ware_type(ware_type=ware_type, page_id=page_id)
         self.assertEqual(self.compiler.mod_ts, {page_id: []})
-        self.compiler.csv_data.assert_called_once_with(ware_type)
         self.compiler.prep_row.assert_has_calls([
             call(rows[0], page_id, 100000, ware_type, [], has_ts=True),
             call(rows[1], page_id, 100010, ware_type, [], has_ts=True),
@@ -326,70 +362,14 @@ class ModCompilerUnitTest(TestCase):
         ])
         self.compiler.compile_component.assert_has_calls([
             call(row=rows[0], mod_path=mod_path, rel_path=rel_path, mapping=component_mapping,
-                 base_component_id=src_macros[0].find.return_value.get.return_value),
+                 base_component_id=src_macros[0].find.return_value.get.return_value, connections=[]),
             call(row=rows[1], mod_path=mod_path, rel_path=rel_path, mapping=component_mapping,
-                 base_component_id=src_macros[1].find.return_value.get.return_value),
+                 base_component_id=src_macros[1].find.return_value.get.return_value, connections=[]),
         ])
         src_macros[0].find.assert_called_once_with('./macro/component')
         src_macros[0].find.return_value.get.assert_called_once_with('ref')
         src_macros[1].find.assert_called_once_with('./macro/component')
         src_macros[1].find.return_value.get.assert_called_once_with('ref')
-
-    def test_compile_ware_type_with_additional_compile(self):
-        # additional compile allows an extra compile function for additional processing of row
-        # in particular used to process bullet macro on a weapon macro row
-        self.compiler.csv_data = MagicMock()
-        self.compiler.csv_data.return_value = rows = [
-            MagicMock(), MagicMock()
-        ]
-        self.compiler.prep_row = MagicMock(return_value=100010)
-        self.compiler.compile_ware = MagicMock()
-        self.compiler.compile_macro = MagicMock()
-        src_macros = self.compiler.compile_macro.side_effect = [MagicMock(), MagicMock()]
-        self.compiler.compile_component = MagicMock()
-
-        additional_compile = MagicMock()
-
-        ware_type = 'weapon'
-        page_id = 10001
-
-        self.compiler.compile_ware_type(ware_type=ware_type, page_id=page_id, additional_compile=additional_compile)
-
-        self.assertEqual(self.compiler.mod_ts, {page_id: []})
-        self.compiler.csv_data.assert_called_once_with(ware_type)
-        self.compiler.prep_row.assert_has_calls([
-            call(rows[0], page_id, 100000, ware_type, [], has_ts=True),
-            call(rows[1], page_id, 100010, ware_type, [], has_ts=True),
-        ])
-        self.compiler.compile_ware.assert_has_calls([
-            call(rows[0]),
-            call(rows[1]),
-        ])
-        mod_path = self.compiler.mod_path+'/mod/{}s/'.format(ware_type)
-        rel_path = '/mod/{}s/'.format(ware_type)
-
-        macro_mapping = self.compiler.WARE_MAPPINGS[ware_type]['macro']
-        component_mapping = self.compiler.WARE_MAPPINGS[ware_type]['component']
-
-        self.compiler.compile_macro.assert_has_calls([
-            call(row=rows[0], mod_path=mod_path, rel_path=rel_path, mapping=macro_mapping),
-            call(row=rows[1], mod_path=mod_path, rel_path=rel_path, mapping=macro_mapping),
-        ])
-        self.compiler.compile_component.assert_has_calls([
-            call(row=rows[0], mod_path=mod_path, rel_path=rel_path, mapping=component_mapping,
-                 base_component_id=src_macros[0].find.return_value.get.return_value),
-            call(row=rows[1], mod_path=mod_path, rel_path=rel_path, mapping=component_mapping,
-                 base_component_id=src_macros[1].find.return_value.get.return_value),
-        ])
-        src_macros[0].find.assert_called_once_with('./macro/component')
-        src_macros[0].find.return_value.get.assert_called_once_with('ref')
-        src_macros[1].find.assert_called_once_with('./macro/component')
-        src_macros[1].find.return_value.get.assert_called_once_with('ref')
-
-        additional_compile.assert_has_calls([
-            call(row=rows[0], mod_path=mod_path, rel_path=rel_path, src_macro=src_macros[0]),
-            call(row=rows[1], mod_path=mod_path, rel_path=rel_path, src_macro=src_macros[1]),
-        ])
 
     def test_compile(self):
         self.compiler.mod_ts = MagicMock()
@@ -415,6 +395,22 @@ class ModCompilerUnitTest(TestCase):
             self.compiler.mod_path+'/t/0001-L044.xml', self.compiler.mod_ts)
         self.compiler.write_wares_file.assert_called_once_with(
             self.compiler.mod_path+'/libraries/wares.xml', self.compiler.mod_wares)
+
+    @patch('compile_mod.glob')
+    def test_read_mod_csv_data(self, patch_glob):
+        patch_glob.glob.return_value = [
+            'path/to/file3.csv',
+            'path/to/file1.csv',
+            'path/to/file2.csv',
+        ]
+        self.compiler.read_csv = MagicMock()
+        self.compiler.read_mod_csv_data()
+        self.compiler.read_csv.assert_has_calls([
+            call('path/to/file1.csv', self.compiler.csv_data),
+            call('path/to/file2.csv', self.compiler.csv_data),
+            call('path/to/file3.csv', self.compiler.csv_data),
+        ])
+        patch_glob.glob.assert_called_once_with('path/to/test-mod/*.csv')
 
     @patch('compile_mod.X4ModCompiler.get_wares')
     @patch('compile_mod.X4ModCompiler.get_components')

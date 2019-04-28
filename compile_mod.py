@@ -6,9 +6,8 @@ Use: python3 compile_mod.py {mod name}
 """
 
 import sys
-import csv
 import logging
-from copy import deepcopy
+import glob
 import xml.etree.ElementTree as ET
 from constants import MAPPINGS, T_LIST
 from x4lib import get_config, ModUtilMixin
@@ -75,14 +74,45 @@ class X4ModCompiler(ModUtilMixin):
         self.write_xml(filename, ET.ElementTree(root))
         return root
 
-    def csv_data(self, ware_type):
-        return csv.DictReader(open(self.mod_path+'/{}s.csv'.format(ware_type)))
-
     def read_src(self, name, allow_fail=False):
         filepath = self.src_path.rstrip('/') + '/' + name + '.xml'
         return self.read_xml(filepath, allow_fail=allow_fail)
 
-    def compile_xml(self, row, mod_path, rel_path, src_xml_path, mapping, mod_id):
+    def compile_connections(self, xml, connections):
+        if connections:
+            for conn in connections:
+                conn_el = xml.find('./*/connections/connection[@name="{}"]'.format(conn['connection_name']))
+                if conn_el is None:
+                    conn_el = ET.Element('connection', name=conn['connection_name'])
+                    conn_el.text = conn_el.tail = '\n'
+                    xml.find('./*/connections').append(conn_el)
+                conn_el.set('tags', conn['tags'])
+                offset_el = conn_el.find('./offset')
+                if offset_el is None:
+                    offset_el = ET.Element('offset')
+                    offset_el.text = offset_el.tail = '\n'
+                    conn_el.append(offset_el)
+                if conn['x'] or conn['y'] or conn['z']:
+                    pos_el = offset_el.find('./position')
+                    if pos_el is None:
+                        pos_el = ET.Element('position')
+                        pos_el.tail = '\n'
+                        offset_el.append(pos_el)
+                    pos_el.set('x', conn['x'])
+                    pos_el.set('y', conn['y'])
+                    pos_el.set('z', conn['z'])
+                if conn['qx'] or conn['qy'] or conn['qz'] or conn['qw']:
+                    qt_el = offset_el.find('./quaternion')
+                    if qt_el is None:
+                        qt_el = ET.Element('quaternion')
+                        qt_el.tail = '\n'
+                        offset_el.append(qt_el)
+                    qt_el.set('qx', conn['qx'])
+                    qt_el.set('qy', conn['qy'])
+                    qt_el.set('qz', conn['qz'])
+                    qt_el.set('qw', conn['qw'])
+
+    def compile_xml(self, row, mod_path, rel_path, src_xml_path, mapping, mod_id, connections=None):
         """
         This tries to pull existing mod xml and update values from row data,
         if no mod xml exists, use src xml.
@@ -103,6 +133,7 @@ class X4ModCompiler(ModUtilMixin):
             # if there is no existing mod version of the xml, use a copy of the source xml
             mod_xml = self.clone(src_xml)
         self.update_xml(xml=mod_xml, mapping=mapping, row=row, label=label)
+        self.compile_connections(xml=mod_xml, connections=connections)
         self.write_xml(filename=mod_xml_filename, xml=mod_xml)
         return src_xml, (mod_id, 'extensions/{}{}{}'.format(self.mod_name, rel_path, mod_id))
 
@@ -126,7 +157,7 @@ class X4ModCompiler(ModUtilMixin):
         self.mod_macros.append(mod_data)
         return src_xml
 
-    def compile_component(self, row, base_component_id, mod_path, rel_path, mapping):
+    def compile_component(self, row, base_component_id, mod_path, rel_path, mapping, connections=None):
         """
         Compile component (takes mod component or src component and updates data from csv
         :param row: (dict) row data from csv
@@ -139,7 +170,8 @@ class X4ModCompiler(ModUtilMixin):
         mod_id = row['component_id']
         src_xml_path = self.src_components[base_component_id]
         src_xml, mod_data = self.compile_xml(row=row, mod_path=mod_path, rel_path=rel_path,
-                                             src_xml_path=src_xml_path, mapping=mapping, mod_id=mod_id)
+                                             src_xml_path=src_xml_path, mapping=mapping, mod_id=mod_id,
+                                             connections=connections)
         self.mod_components.append(mod_data)
         return src_xml
 
@@ -157,25 +189,31 @@ class X4ModCompiler(ModUtilMixin):
         self.update_xml(xml=ware, mapping=self.WARE_MAPPINGS['ware'], row=row, label='mod_ware')
         self.mod_wares.append(ware)
 
-    def compile_ware_type(self, ware_type, page_id, t_id=100000, additional_compile=None, has_ts=True, has_ware=True):
+    def get_ware_type_connections(self, ware_type):
+        csv_connections = self.csv_data.get(ware_type+'.conn', [])
+        connections = {}
+        for conn in csv_connections:
+            conn_list = connections.setdefault(conn['id'], [])
+            conn_list.append(conn)
+        return connections
+
+    def compile_ware_type(self, ware_type, page_id, t_id=100000, has_ts=True, has_ware=True):
         rel_path = '/mod/{}s/'.format(ware_type)
         macro_mapping = self.WARE_MAPPINGS[ware_type]['macro']
         component_mapping = self.WARE_MAPPINGS[ware_type]['component']
         page_ts = []
         self.mod_ts[page_id] = page_ts
         mod_path = self.mod_path+rel_path
-        reader = self.csv_data(ware_type)
-        for row in reader:
+        rows = self.csv_data[ware_type]
+        connections = self.get_ware_type_connections(ware_type)
+        for row in rows:
             t_id = self.prep_row(row, page_id, t_id, ware_type, page_ts, has_ts=has_ts)
             if has_ware:
                 self.compile_ware(row)
             src_macro = self.compile_macro(row=row, mod_path=mod_path, rel_path=rel_path, mapping=macro_mapping)
             base_component_id = src_macro.find('./macro/component').get('ref')
             self.compile_component(row=row, base_component_id=base_component_id, mod_path=mod_path, rel_path=rel_path,
-                                   mapping=component_mapping)
-
-            if additional_compile is not None:
-                additional_compile(row=row, src_macro=src_macro, mod_path=mod_path, rel_path=rel_path)
+                                   mapping=component_mapping, connections=connections.get(row['id'], []))
 
     def compile(self):
         self.compile_ware_type(ware_type='bullet', page_id=20105, has_ts=False, has_ware=False)
@@ -188,12 +226,18 @@ class X4ModCompiler(ModUtilMixin):
         self.write_ts_file(self.mod_path+'/t/0001-L044.xml', self.mod_ts)
         self.write_wares_file(self.mod_path+'/libraries/wares.xml', self.mod_wares)
 
+    def read_mod_csv_data(self):
+        self.csv_data = {}
+        for filename in sorted(glob.glob(self.mod_path+'/*.csv')):
+            self.read_csv(filename, self.csv_data)
+
     def __init__(self, name, config):
         self.mod_name = name
         self.mod_macros = []
         self.mod_components = []
         self.mod_ts = {}
         self.mod_wares = []
+        self.csv_data = None
         if config:
             self.mod_path = config.MODS + '/' + self.mod_name
             self.src_path = config.SRC
@@ -201,6 +245,7 @@ class X4ModCompiler(ModUtilMixin):
             self.src_components = self.get_components(src_path=config.SRC)
             self.src_wares = self.get_wares(src_path=config.SRC)
             self.old_wares = self.get_wares(src_path=self.mod_path, allow_fail=True)
+            self.read_mod_csv_data()
 
 
 if __name__ == '__main__':

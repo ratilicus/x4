@@ -1,2 +1,16 @@
-id,base_macro,hull,people,mass,inertia_pitch,inertia_yaw,inertia_roll,drag_forward,drag_reverse,drag_horizontal,drag_vertical,drag_pitch,drag_yaw,drag_roll,name,basename,description,variation,shortvariation,price_min,price_avg,price_max,restriction
-pegasus,ship_par_s_scout_01_b_macro,1300,2,5.765,0.855,0.855,0.684,3.255,7.64,4.09,4.09,3.208,3.208,3.208,Pegasus X,Pegasus,Pegasus – Extra version,Xtra,X,2000,2000,2000,generaluseship
+H ship,id,base_macro,hull,people,mass,inertia_pitch,inertia_yaw,inertia_roll,drag_forward,drag_reverse,drag_horizontal,drag_vertical,drag_pitch,drag_yaw,drag_roll,name,basename,description,variation,shortvariation,price_min,price_avg,price_max,restriction
+D,pegasus,ship_par_s_scout_01_b_macro,1300,2,5.765,0.855,0.855,0.684,3.255,7.64,4.09,4.09,3.208,3.208,3.208,Pegasus X,Pegasus,Pegasus – Extra version,Xtra,X,2000,2000,2000,generaluseship
+D,pegasus2,ship_par_s_scout_01_b_macro,1300,2,5.765,0.855,0.855,0.684,3.255,7.64,4.09,4.09,3.208,3.208,3.208,Pegasus X2,Pegasus,Pegasus – Extra version 2,Xtra2,X2,2000,2000,2000,generaluseship
+,,,,,,,,,,,,,,,,,,,,,,,,
+H ship.conn,id,connection_name,x,y,z,qx,qy,qz,qw,tags,,,,,,,,,,,,,,
+D,pegasus,con_weapon_01,,,,,,,,weapon small pac ire platformcollision,,,,,,,,,,,,,,
+D,pegasus,con_weapon_02,-12,-1.916817,-3,,,,,weapon small ire platformcollision,,,,,,,,,,,,,,
+D,pegasus,con_weapon_03,12,-1.916817,-3,,,,,weapon small ire platformcollision,,,,,,,,,,,,,,
+D,pegasus,con_shield_01,,,,,,,,small shield 1mj 2mj 3mj unhittable,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+D,pegasus2,con_weapon_01,,,,,,,,weapon small pac ire platformcollision,,,,,,,,,,,,,,
+D,pegasus2,con_weapon_02,-12,-1.916817,-3,,,,,weapon small ire platformcollision,,,,,,,,,,,,,,
+D,pegasus2,con_weapon_03,12,-1.916817,-3,,,,,weapon small ire platformcollision,,,,,,,,,,,,,,
+D,pegasus2,con_weapon_04,-14,-1.916817,-3,,,,,weapon small ire platformcollision,,,,,,,,,,,,,,
+D,pegasus2,con_weapon_05,14,-1.916817,-3,,,,,weapon small ire platformcollision,,,,,,,,,,,,,,
+D,pegasus2,con_shield_01,,,,,,,,small shield 1mj 2mj 3mj 5mj unhittable,,,,,,,,,,,,,,
