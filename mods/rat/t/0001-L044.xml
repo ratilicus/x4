@@ -11,18 +11,26 @@
 <t id="100007">PAC</t>
 </page>
 <page id="20106">
-<t id="100000">2MJ Shield</t>
-<t id="100001">2MJ Shield</t>
-<t id="100002">2MJ Shield for small ships</t>
-<t id="100003">2MJ</t>
-<t id="100004">5MJ Shield</t>
-<t id="100005">5MJ Shield</t>
-<t id="100006">5MJ Shield for small ships</t>
-<t id="100007">5MJ</t>
-<t id="100008">25MJ Shield</t>
-<t id="100009">25MJ Shield</t>
-<t id="100010">25MJ Shield for small ships</t>
-<t id="100011">25MJ</t>
+<t id="100000">1MJ Shield</t>
+<t id="100001">1MJ Shield</t>
+<t id="100002">1MJ Shield for small ships</t>
+<t id="100003">1MJ</t>
+<t id="100004">2MJ Shield</t>
+<t id="100005">2MJ Shield</t>
+<t id="100006">2MJ Shield for small ships</t>
+<t id="100007">2MJ</t>
+<t id="100008">3MJ Shield</t>
+<t id="100009">3MJ Shield</t>
+<t id="100010">3MJ Shield for small ships</t>
+<t id="100011">3MJ</t>
+<t id="100012">5MJ Shield</t>
+<t id="100013">5MJ Shield</t>
+<t id="100014">5MJ Shield for small ships</t>
+<t id="100015">5MJ</t>
+<t id="100016">25MJ Shield</t>
+<t id="100017">25MJ Shield</t>
+<t id="100018">25MJ Shield for small ships</t>
+<t id="100019">25MJ</t>
 </page>
 <page id="20101">
 <t id="100000">Pegasus X</t>
@@ -30,5 +38,10 @@
 <t id="100002">Pegasus – Extra version</t>
 <t id="100003">Xtra</t>
 <t id="100004">X</t>
+<t id="100005">Pegasus X2</t>
+<t id="100006">Pegasus</t>
+<t id="100007">Pegasus – Extra version 2</t>
+<t id="100008">Xtra2</t>
+<t id="100009">X2</t>
 </page>
 </language>

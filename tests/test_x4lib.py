@@ -97,6 +97,37 @@ class ModUtilMixinUnitTest(TestCase):
         patch_read_xml.assert_called_once_with(src_path+'/libraries/wares.xml', allow_fail=True)
 
     @patch('builtins.open')
+    @patch('x4lib.csv')
+    def test_read_csv(self, patch_csv, patch_open):
+        patch_csv.reader.return_value = [
+            ('H component-1', 'f1', 'f2', 'f3'),
+            ('#', 'some ignored comment'),
+            ('D', 'v11', '', 'v13'),
+            ('', 'another ignored line'),
+            ('D', '', 'v22', ''),
+            ('',),
+            ('H component-2', 'f21', 'f22', ''),
+            ('D', 'v211', 'v212', ''),
+            ('D', 'v221', '', ''),
+            ('D', '', 'v232', ''),
+        ]
+        filename = 'path/to/file.csv'
+        csv_data = {}
+        ModUtilMixin.read_csv(filename, csv_data)
+        self.assertEqual(csv_data, {
+            'component-1': [
+                {'f1': 'v11', 'f2': '', 'f3': 'v13'},
+                {'f1': '', 'f2': 'v22', 'f3': ''}],
+            'component-2': [
+                {'f21': 'v211', 'f22': 'v212'},
+                {'f21': 'v221', 'f22': ''},
+                {'f21': '', 'f22': 'v232'}
+            ]
+        })
+        patch_csv.reader.assert_called_once_with(patch_open.return_value)
+        patch_open.assert_called_once_with(filename)
+
+    @patch('builtins.open')
     @patch('x4lib.os')
     def test_write_xml(self, patch_os, patch_open):
         filename = 'path/to/filename'
