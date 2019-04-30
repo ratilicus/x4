@@ -1,4 +1,4 @@
-#!/usr/bin/python3.7
+#!/usr/bin/env python3.7
 
 """
 Extract xmf files into Wavefront objs (that can be opened in 3D cad software like Blender
@@ -18,19 +18,20 @@ import zlib
 import glob
 from io import BytesIO
 from PIL import Image, ImageDraw
-from x4lib import get_config, StructObjBase, StructObjBaseMeta
+from x4lib import get_config, require_python_version, StructObjBase, StructObjBaseMeta
 
+require_python_version(3, 6)
 logger = logging.getLogger('x4.' + __name__)
-
-if sys.version_info.major < 3 or sys.version_info.minor < 6:
-    logger.error('This script requires python 3.6 or higher.')
-    exit(0)
 
 
 VERTEX = 'v'
 NORMAL = 'vn'
 UV = 'vt'
 FACE = 'f'
+
+
+class XMFException(Exception):
+    pass
 
 
 class XMFHeader(StructObjBase, metaclass=StructObjBaseMeta):
@@ -72,49 +73,30 @@ class XMFChunk(StructObjBase, metaclass=StructObjBaseMeta):
     fields = 'id1,part,offset,id2,packed,qty,bytes'
     struct_format = b'<III8xIIII'
 
-    @classmethod
-    def get_data_class(cls, chunk):
-        logger.debug('get_reader: chunk', chunk)
-        if chunk.id1 == 0 and chunk.id2 == 2:
-            reader_class = ChunkDataV2
+    def get_chunk_data_class(self):
+        if self.id1 == 0 and self.id2 == 2:
+            data_class = ChunkDataV2
 
-        elif chunk.id1 == 0 and chunk.id2 == 32 and chunk.bytes >=28:
-            if chunk.bytes >= 32:
-                reader_class = ChunkDataV32
+        elif self.id1 == 0 and self.id2 == 32 and self.bytes >= 28:
+            if self.bytes >= 32:
+                data_class = ChunkDataV32
             else:
-                reader_class = ChunkDataV28
+                data_class = ChunkDataV28
 
-        elif chunk.id1 == 30 and chunk.id2 == 30:
-            reader_class = ChunkDataF30
+        elif self.id1 == 30 and self.id2 == 30:
+            data_class = ChunkDataF30
 
-        elif chunk.id1 == 30 and chunk.id2 == 31:
-            reader_class = ChunkDataF31
+        elif self.id1 == 30 and self.id2 == 31:
+            data_class = ChunkDataF31
 
         else:
-            raise Exception(f'unknown format: id1={chunk.id1}, id2={chunk.id2}, bytes={chunk.bytes}')
-
-        return reader_class
-
-    def init(self, stream, chunk_size):
-        stream.seek(chunk_size - self.struct_len, 1)
-        self.data_class = self.get_data_class(chunk=self)
-        self.unpacked = self.qty * self.bytes
-        self.read_len = max(self.bytes, self.data_class.struct_len)
-        self.skip_bytes = max(0, self.bytes - self.data_class.struct_len)
-        self.data = []
-
-    def read(self, stream):
-        obj = self.data_class(stream)
-        stream.seek(self.skip_bytes, 1)
-        return obj
+            raise XMFException(f'unknown format: id1={self.id1}, id2={self.id2}, bytes={self.bytes}')
+        return data_class
 
 
 class XMFMaterial(StructObjBase, metaclass=StructObjBaseMeta):
     fields = 'start,count,name'
     struct_format = b'<II128s'
-
-    def init(self, stream):
-        self.name = self.name.rstrip(b'\x00').decode('utf-8')
 
 
 class XMFReader(object):
@@ -122,33 +104,58 @@ class XMFReader(object):
     chunk_class = XMFChunk
     material_class = XMFMaterial
 
-    def read_header(self):
-        header = self.header_class(self.stream)
-        assert header.file_type == b'XUMF' and header.version == 3 and header.chunk_offset == 64, 'invalid file type!'
-        logger.debug('read_header', header)
-        self.header = header
+    def get_header(self, stream):
+        logger.info('\nget_header()')
+        header = self.header_class.from_stream(stream)
+        if not (header.file_type == b'XUMF' and header.version == 3 and header.chunk_offset == 64):
+            raise XMFException('get_header: invalid file type!')
+        logger.debug('> info: %s', header)
+        return header
 
-    def get_chunks(self):
-        self.chunks = []
-        for i in range(self.header.chunk_count):
-            logger.debug('unpacking chunk %d', i)
-            self.chunks.append(self.chunk_class(self.stream, chunk_size=self.header.chunk_size))
+    def get_chunks(self, stream, header):
+        logger.info('\nget_chunks(ct=%s)', header.chunk_count)
+        chunks = []
+        for i in range(header.chunk_count):
+            logger.debug('> unpacking chunk %d', i)
+            chunk = self.chunk_class.from_stream(stream, read_len=header.chunk_size)
+            logger.debug('>> %s', chunk)
+            chunks.append(chunk)
+        return chunks
 
-    def get_materials(self):
-        self.materials = []
-        for i in range(self.header.material_count):
-            logger.debug('unpacking material %d', i)
-            self.materials.append(self.material_class(self.stream))
+    def get_materials(self, stream, header):
+        logger.info('\nget_materials(ct=%s)', header.material_count)
+        materials = []
+        for i in range(header.material_count):
+            logger.debug('> unpacking material %d', i)
+            mat = self.material_class.from_stream(stream)
+            mat.name = mat.name.rstrip(b'\x00').decode('utf-8')
+            logger.debug('>> material: %s', mat)
+            materials.append(mat)
+        return materials
 
-    def read_chunk_data(self):
+    def read_chunk_data(self, stream, chunks):
+        logger.info('\nread_chunk_data(ct=%d)', len(chunks))
         self.flags = set()
-        start_offset = self.stream.tell()
-        for chunk in self.chunks:
-            self.flags.update(chunk.data_class.flags)
-            self.stream.seek(start_offset + chunk.offset)
-            chunk_stream = BytesIO(zlib.decompress(self.stream.read(chunk.packed)))
-            for i in range(0, chunk.unpacked, chunk.read_len):
-                chunk.data.append(chunk.read(chunk_stream))
+        start_offset = stream.tell()
+        for chunk in chunks:
+            logger.debug('> reading chunk: %s', chunk)
+            stream.seek(start_offset + chunk.offset)
+            chunk_stream = BytesIO(zlib.decompress(stream.read(chunk.packed)))
+
+            data_class = chunk.get_chunk_data_class()
+            self.flags.update(data_class.flags)
+            read_len = max(chunk.bytes, data_class.struct_len)
+            data_count = chunk.qty * chunk.bytes // read_len
+            from_stream = data_class.from_stream
+            if VERTEX in data_class.flags:
+                data = self.vertices
+            else:
+                data = self.faces
+
+            logger.debug('>> info: data_class=%s, read_len=%d, data_count=%d',
+                         data_class.class_name, read_len, data_count)
+            for i in range(data_count):
+                data.append(from_stream(stream=chunk_stream, read_len=read_len))
 
     def write_material_data(self, of, material):
         of.write(f'newmtl {material.name}\n\n'.encode('ascii'))
@@ -163,19 +170,22 @@ class XMFReader(object):
         of.write(b'\n\n')
 
     def write_material_file(self):
-        logger.info('writing materials file')
+        logger.info('\nwrite_material_file()')
         os.makedirs(f'{self.obj_path}/{self.file_dir}', exist_ok=True)
         with open(f'{self.obj_path}/{self.file_dir}/{self.file_name}.mat', 'wb') as of:
             for material in self.materials:
+                logger.debug('> write_material_data(%s)', material)
                 self.write_material_data(of, material)
 
-    def write_chunk_vertices(self, of, chunk):
+    def write_vertices(self, of):
         has_normals = NORMAL in self.flags
         has_uvs = UV in self.flags
-        vertices, normals, uvs = [], [b'\n'], [b'\n']
+        vertices = []
+        normals = [b'\n']
+        uvs = [b'\n']
         bad_uv = False
-        maxu, minu = -20000, 20000
-        for o in chunk.data:
+        max_u, min_u = -20000, 20000
+        for o in self.vertices:
             vertices.append(f'v {(-o.x):.3f} {o.y:.3f} {o.z:.3f}\n'.encode('ascii'))
             if has_normals:
                 normals.append(f'vn {(127-o.nz)/128:.3f} {(o.ny-127)/128:.3f} {(o.nx-127)/128:.3f}\n'.encode('ascii'))
@@ -183,11 +193,13 @@ class XMFReader(object):
                 uvs.append(f'vt {o.tu:.3f} {1.0-o.tv:.3f}\n'.encode('ascii'))
                 if abs(o.tu) > 20000:
                     bad_uv = True
-                    if o.tu > maxu: maxu = o.tu
-                    if o.tu < minu: minu = o.tu
+                    if o.tu > max_u:
+                        max_u = o.tu
+                    if o.tu < min_u:
+                        min_u = o.tu
         if bad_uv:
             # when uvs are unpacked in incorrect format these values are out of range
-            print(f'\tINVALID UVs ({minu} - {maxu})')
+            print(f'\tINVALID UVs ({min_u} - {max_u})')
             raise
 
         of.writelines(vertices)
@@ -196,85 +208,78 @@ class XMFReader(object):
         if has_uvs:
             of.writelines(uvs)
 
-    def write_chunk_faces(self, of, chunk):
+    def write_faces(self, of):
         of.write(b'\n')
         if self.materials:
             for i, mat in enumerate(self.materials):
                 of.write(f'g group{i}\n'.encode('ascii'))
                 of.write(f'usemtl {mat.name}\n'.encode('ascii'))
-                for f in chunk.data[mat.start//3: mat.start+mat.count//3]:
+                for f in self.faces[mat.start//3: mat.start+mat.count//3]:
                     of.write(f'f {f.i0+1}/{f.i0+1}/{f.i0+1} {f.i1+1}/{f.i1+1}/{f.i1+1} {f.i2+1}/{f.i2+1}/{f.i2+1}\n'
                              .encode('ascii'))
                 of.write(b'\n')
         else:
-            for f in chunk.data:
+            for f in self.faces:
                 of.write(f'f {f.i0+1} {f.i1+1} {f.i2+1}\n'.encode('ascii'))
 
     def write_object_file(self):
-        logger.info('writing obj file')
+        logger.info('\nwrite_object_file()')
         os.makedirs(f'{self.obj_path}/{self.file_dir}', exist_ok=True)
         with open(f'{self.obj_path}/{self.file_dir}/{self.file_name}.obj', 'wb') as of:
-            for chunk in self.chunks:
-                if VERTEX in chunk.data_class.flags:
-                    self.write_chunk_vertices(of, chunk)
-                elif FACE in chunk.data_class.flags:
-                    self.write_chunk_faces(of, chunk)
+            logger.debug('> write_vertices()')
+            self.write_vertices(of)
+            logger.debug('> write_faces()')
+            self.write_faces(of)
 
-    def thumb(self):
-        img = Image.new("RGB", (900,315), "#FFFFFF")
+    def gen_thumb(self):
+        logger.info('\ngen_thumb()')
+        img = Image.new("RGB", (900, 315), "#FFFFFF")
         draw = ImageDraw.Draw(img)
-        colors = [(((i*64621)**2) % 256, (((i*12415)**4) % 256), (((i*834793)*3) % 256)) for i in range(256)]
+        colors = ((((i*64621)**2) % 256, (((i*12415)**4) % 256), (((i*834793)*3) % 256)) for i in range(256))
 
         for c in range(0, 900//150*5):
             i = c*(150.0/5)
-            draw.line([i,0,i,300], fill=(192,192,192))
+            draw.line([i, 0, i, 300], fill=(192, 192, 192))
 
         for c in range(0, 300//150*5):
             i = c*(150.0/5)
-            draw.line([0, i,900,i], fill=(192,192,192))
+            draw.line([0, i, 900, i], fill=(192, 192, 192))
 
-        draw.line([0,150,900,150], fill=(0,0,0))
-        draw.line([150,0,150,300], fill=(0,0,0))
-        draw.line([450,0,450,300], fill=(0,0,0))
-        draw.line([750,0,750,300], fill=(0,0,0))
+        draw.line([0, 150, 900, 150], fill=(0, 0, 0))
+        draw.line([150, 0, 150, 300], fill=(0, 0, 0))
+        draw.line([450, 0, 450, 300], fill=(0, 0, 0))
+        draw.line([750, 0, 750, 300], fill=(0, 0, 0))
 
-        draw.line([300,0,300,300], fill=(255,255,255))
-        draw.line([600,0,600,300], fill=(255,255,255))
+        draw.line([300, 0, 300, 300], fill=(255, 255, 255))
+        draw.line([600, 0, 600, 300], fill=(255, 255, 255))
 
-        extents = [[0, 0, 0],[0, 0, 0],[0, 0, 0]]
-
-        vertices = self.chunks[0].data
-        faces = self.chunks[1].data
-
-        extent = 0.0
-        for v in vertices:
+        max_extent = 0.0
+        extents = [[0, 0, 0], [0, 0, 0], [0, 0, 0]]
+        for v in self.vertices:
             extents[0][0] = min(extents[0][0], v.x)
             extents[0][1] = max(extents[0][1], v.x)
             extents[1][0] = min(extents[1][0], v.y)
             extents[1][1] = max(extents[1][1], v.y)
             extents[2][0] = min(extents[2][0], v.z)
             extents[2][1] = max(extents[2][1], v.z)
-            extent = max(extent, abs(v.x), abs(v.y), abs(v.z))
+            max_extent = max(max_extent, abs(v.x), abs(v.y), abs(v.z))
 
         extents[0][2] = extents[0][1] - extents[0][0]
         extents[1][2] = extents[1][1] - extents[1][0]
         extents[2][2] = extents[2][1] - extents[2][0]
 
-        for mi, m in enumerate(self.materials):
-            try:
-                color = colors[mi]
-            except:
-                raise
-            for fi, f in enumerate(faces[m.start//3: m.start//3+m.count//3]):
-                verts = [vertices[f.i0], vertices[f.i1], vertices[f.i2]]
+        for m in self.materials:
+            color = next(colors)
+            for f in self.faces[m.start//3: m.start//3+m.count//3]:
+                verts = [self.vertices[f.i0], self.vertices[f.i1], self.vertices[f.i2]]
 
-                pos=[(150+150*v.x//extent, 150-150*v.y//extent) for v in verts]
+                pos = [(150+150*v.x//max_extent, 150-150*v.y//max_extent) for v in verts]
                 draw.polygon(pos, fill=color)
 
-                pos=[(450+150*v.x//extent, 150+150*v.z//extent) for v in verts]
+                pos = [(450+150*v.x//max_extent, 150+150*v.z//max_extent) for v in verts]
                 draw.polygon(pos, fill=color)
 
-                pos=[(750-150*v.y//extent, 150+150*v.z//extent) for v in verts]
+                pos = [(750-150*v.y//max_extent, 150+150*v.z//max_extent) for v in verts]
                 draw.polygon(pos, fill=color)
 
         s = 'SIZE: %0.1fm x %0.1fm x %0.1fm' % (
@@ -282,62 +287,61 @@ class XMFReader(object):
             extents[1][2],
             extents[2][2]
         )
-        # s+= ' | SQR SIZE: %d (%0.1fm)' % (65536.0/5, 65536.0/5/500.0)
-        draw.text((3,303), s, fill=(0,0,0))
+        s += ' | SQR SIZE: %0.1fm' % (max_extent/5)
+        draw.text((3, 303), s, fill=(0, 0, 0))
 
-        os.makedirs(f'{self.obj_path}/thumbs', exist_ok=True)
-        img.save(f'{self.obj_path}/thumbs/{self.file_dir}.gif', "GIF")
-
-        print(
-            round(extents[0][2], 1),
-            round(extents[1][2], 1),
-            round(extents[2][2], 1)
-        )
+        os.makedirs(self.thumb_path, exist_ok=True)
+        img.save(f'{self.thumb_path}/{self.file_dir}.gif', "GIF")
 
     def read(self):
-        self.read_header()
-        self.get_chunks()
-        self.get_materials()
-        self.read_chunk_data()
+        logger.info('read()')
+        with open(self.xmf_filename, 'rb') as stream:
+            self.header = self.get_header(stream=stream)
+            self.chunks = self.get_chunks(stream=stream, header=self.header)
+            self.materials = self.get_materials(stream=stream, header=self.header)
+            self.read_chunk_data(stream=stream, chunks=self.chunks)
+
         self.write_object_file()
         self.write_material_file()
 
-    def __init__(self, xmf_filename, obj_path):
-        self.file_path, file_dir, file_name = xmf_filename.rsplit('/', 2)
+    def __init__(self, xmf_filename, obj_path, thumb_path):
+        self.xmf_filename = xmf_filename
+        file_dir, file_name = xmf_filename.rsplit('/', 2)[1:]
         self.file_dir = file_dir[:-5]
         self.file_name = file_name[:-4]
         self.obj_path = obj_path
-        self.stream = open(xmf_filename, 'rb')
-        self.header = None
-        self.materials = []
+        self.thumb_path = thumb_path
+        self.flags = set()
         self.chunks = []
-        self.data = {}
-        self.formatters = None
+        self.materials = []
+        self.vertices = []
+        self.faces = []
 
 
 if __name__ == '__main__':
     logger.addHandler(logging.StreamHandler())
-    logger.setLevel(logging.INFO)
 
     args = set(sys.argv[1:])
     if not args:
-        logger.info("%s <path/to/file.xmf | --all>", sys.argv[0])
+        print("%s <path/to/file.xmf | --all>", sys.argv[0])
 
     elif sys.argv[1] == '--all':
         logger.setLevel(logging.ERROR)
         config = get_config()
-        files = sorted(glob.glob('src/assets/units/*/ship_*_data/*_main-lod0.xmf'))
+        files = sorted(glob.glob(config.SRC + '/assets/units/*/ship_*_data/*_main-lod0.xmf'))
         for filename in files:
             if 'part_main' in filename or 'anim_main' in filename:
-                reader = XMFReader(xmf_filename=filename, obj_path=config.OBJS)
+                reader = XMFReader(xmf_filename=filename, obj_path=config.OBJS, thumb_path=config.THUMBS)
                 try:
                     reader.read()
-                    reader.thumb()
+                    reader.gen_thumb()
                     print(f'processing {filename}.. successful!')
-                except Exception as e:
+                except XMFException as e:
                     print(f'processing {filename}.. failed!')
+                    print(f'\t\t{e}')
 
     else:
+        logger.setLevel(logging.DEBUG)
         filename = sys.argv[1]
         if not filename.endswith('.xmf'):
             # if not provided a full path including name, try to find
@@ -353,6 +357,6 @@ if __name__ == '__main__':
 
         if filename:
             config = get_config()
-            reader = XMFReader(xmf_filename=filename, obj_path=config.OBJS)
+            reader = XMFReader(xmf_filename=filename, obj_path=config.OBJS, thumb_path=config.THUMBS)
             reader.read()
-            reader.thumb()
+            reader.gen_thumb()

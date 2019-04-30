@@ -1,4 +1,5 @@
 import logging
+import sys
 import os
 import os.path
 from copy import deepcopy
@@ -7,6 +8,12 @@ from struct import calcsize, Struct
 import csv
 
 logger = logging.getLogger('x4.' + __name__)
+
+
+def require_python_version(major, minor):
+    if sys.version_info.major < major or sys.version_info.minor < minor:
+        logger.error('This script requires python 3.6 or higher.')
+        exit(0)
 
 
 def get_config():
@@ -90,21 +97,33 @@ class ModUtilMixin(object):
                 rows.append({h: d for h, d in zip(header, row[1:])})
 
 
+class StructException(Exception):
+    pass
+
+
 class StructObjBaseMeta(type):
     def __init__(cls, name, bases, namespace):
         super(StructObjBaseMeta, cls).__init__(name, bases, namespace)
+        cls.class_name = name
         cls.fields = cls.fields.split(',')
         cls.struct_len = calcsize(cls.struct_format)
         cls.struct = Struct(cls.struct_format)
 
 
 class StructObjBase(object):
-    def __init__(self, stream, **kwargs):
-        self.__dict__ = {k: v for k, v in zip(self.fields, self.struct.unpack(stream.read(self.struct_len)))}
-        self.init(stream, **kwargs)
+    def __init__(self, **kwargs):
+        if set(self.fields) - set(kwargs):
+            raise StructException(f'Missing fields:\n\tpassed: {kwargs}, \n\trequired: {self.fields}')
+        self.__dict__ = kwargs
 
-    def __str__(self):
-        return '%s(%s)' % (self.__class__.__name__, ', '.join('%s=%r' % (f, v) for f, v in self.__dict__.items()))
+    @classmethod
+    def from_stream(cls, stream, read_len=0):
+        obj = cls(**{k: v for k, v in zip(cls.fields, cls.struct.unpack(stream.read(cls.struct_len)))})
+        stream.seek(max(0, read_len - obj.struct_len), 1)
+        return obj
 
-    def init(self, stream, **kwargs):
-        pass
+    def to_stream(self):
+        return self.struct.pack(*(self.__dict__[f] for f in self.fields))
+
+    def __repr__(self):
+        return '%s(%s)' % (self.class_name, ', '.join('%s=%r' % (f, self.__dict__[f]) for f in self.fields))

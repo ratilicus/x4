@@ -4,4 +4,5 @@ X4 = "/home/adam/.local/share/Steam/steamapps/common/X4 Foundations"
 SRC = "/home/adam/x4/src"
 MODS = "/home/adam/x4/mods"
 OBJS = "/home/adam/x4/objs"
+THUMBS =  "/home/adam/x4/thumbs"
 
