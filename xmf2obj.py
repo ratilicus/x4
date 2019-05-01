@@ -18,85 +18,11 @@ import zlib
 import glob
 from io import BytesIO
 from PIL import Image, ImageDraw
-from x4lib import get_config, require_python_version, StructObjBase, StructObjBaseMeta
+from x4lib import get_config, require_python_version
+from xmflib import XMFException, XMFHeader, XMFChunk, XMFMaterial, VERTEX, NORMAL, UV
 
 require_python_version(3, 6)
 logger = logging.getLogger('x4.' + __name__)
-
-
-VERTEX = 'v'
-NORMAL = 'vn'
-UV = 'vt'
-FACE = 'f'
-
-
-class XMFException(Exception):
-    pass
-
-
-class XMFHeader(StructObjBase, metaclass=StructObjBaseMeta):
-    fields = 'file_type,version,chunk_offset,chunk_count,chunk_size,material_count,vertex_count,index_count'
-    struct_format = b'<4shhBBB3xII42x'
-
-
-class ChunkDataV2(StructObjBase, metaclass=StructObjBaseMeta):
-    flags = {VERTEX}
-    fields = 'x,y,z'
-    struct_format = '<fff'
-
-
-class ChunkDataV32(StructObjBase, metaclass=StructObjBaseMeta):
-    flags = {VERTEX, NORMAL, UV}
-    fields = 'x,y,z,nx,ny,nz,tx,ty,tz,tu,tv'
-    struct_format = '<fffBBBxBBBxff'
-
-
-class ChunkDataV28(StructObjBase, metaclass=StructObjBaseMeta):
-    flags = {VERTEX, NORMAL, UV}
-    fields = 'x,y,z,nx,ny,nz,tx,ty,tz,tu,tv'
-    struct_format = '<fffBBBxBBBxff'
-
-
-class ChunkDataF30(StructObjBase, metaclass=StructObjBaseMeta):
-    flags = {FACE}
-    fields = 'i0,i1,i2'
-    struct_format = '<HHH'
-
-
-class ChunkDataF31(StructObjBase, metaclass=StructObjBaseMeta):
-    flags = {FACE}
-    fields = 'i0,i1,i2'
-    struct_format = '<III'
-
-
-class XMFChunk(StructObjBase, metaclass=StructObjBaseMeta):
-    fields = 'id1,part,offset,id2,packed,qty,bytes'
-    struct_format = b'<III8xIIII'
-
-    def get_chunk_data_class(self):
-        if self.id1 == 0 and self.id2 == 2:
-            data_class = ChunkDataV2
-
-        elif self.id1 == 0 and self.id2 == 32 and self.bytes >= 28:
-            if self.bytes >= 32:
-                data_class = ChunkDataV32
-            else:
-                data_class = ChunkDataV28
-
-        elif self.id1 == 30 and self.id2 == 30:
-            data_class = ChunkDataF30
-
-        elif self.id1 == 30 and self.id2 == 31:
-            data_class = ChunkDataF31
-
-        else:
-            raise XMFException(f'unknown format: id1={self.id1}, id2={self.id2}, bytes={self.bytes}')
-        return data_class
-
-
-class XMFMaterial(StructObjBase, metaclass=StructObjBaseMeta):
-    fields = 'start,count,name'
-    struct_format = b'<II128s'
 
 
 class XMFReader(object):
@@ -164,9 +90,9 @@ class XMFReader(object):
         of.write(b'Ks 1.00 1.00 1.00\n')
         of.write(b'Ns 4.0\n')
         of.write(b'illum 2\n')
-        of.write(f'map_Kd tex/{material.name}_diff.tga\n'.encode('ascii'))
-        of.write(f'map_Kd tex/{material.name}_spec.tga\n'.encode('ascii'))
-        of.write(f'map_Kd tex/{material.name}_bump.tga\n'.encode('ascii'))
+        # of.write(f'map_Kd tex/{material.name}_diff.tga\n'.encode('ascii'))
+        # of.write(f'map_Ks tex/{material.name}_spec.tga\n'.encode('ascii'))
+        # of.write(f'bump_map tex/{material.name}_bump.tga\n'.encode('ascii'))
         of.write(b'\n\n')
 
     def write_material_file(self):

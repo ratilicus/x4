@@ -7,7 +7,7 @@ from io import BytesIO
 from unittest import TestCase
 from unittest.mock import patch, call, MagicMock
 
-from x4lib import require_python_version, get_config, ModUtilMixin, StructException, StructObjBaseMeta, StructObjBase
+from x4lib import require_python_version, get_config, ModUtilMixin
 
 
 class X4LibUnitTest(TestCase):
@@ -209,54 +209,3 @@ class ModUtilMixinUnitTest(TestCase):
             call(xml, mapping[0][0], mapping[0][1], mapping[0][2], row, label=label),
             call(xml, mapping[1][0], mapping[1][1], mapping[1][2], row, label=label),
         ])
-
-
-class TestObj(StructObjBase, metaclass=StructObjBaseMeta):
-    fields = 'text,short,int'
-    struct_format = b'<3shi'
-
-
-class StructObjUnitTest(TestCase):
-    def test_metaclass_struct_len(self):
-        self.assertEqual(TestObj.struct_len, 3+2+4)
-
-    def test_init(self):
-        obj = TestObj(text='some-text', short=1234, int=5678, extra_kwarg=1000)
-        self.assertEqual(obj.text, 'some-text')
-        self.assertEqual(obj.short, 1234)
-        self.assertEqual(obj.int, 5678)
-        self.assertEqual(obj.extra_kwarg, 1000)
-        self.assertEqual(str(obj), "TestObj(text='some-text', short=1234, int=5678)")
-
-    def test_init_missing_kwarg(self):
-        with self.assertRaises(StructException):
-            TestObj(text='some-text', int=5678, extra_kwarg=1000)
-
-    def test_from_stream(self):
-        stream = BytesIO(b'ABC\x01\x00\x02\x00\x00\x00DEF\x03\x00\x04\x00\x00\x00')
-        obj = TestObj.from_stream(stream)
-        self.assertEqual(obj.text, b'ABC')
-        self.assertEqual(obj.short, 1)
-        self.assertEqual(obj.int, 2)
-        self.assertEqual(str(obj), "TestObj(text=b'ABC', short=1, int=2)")
-        self.assertEqual(stream.tell(), obj.struct_len)
-
-        obj = TestObj.from_stream(stream)
-        self.assertEqual(obj.text, b'DEF')
-        self.assertEqual(obj.short, 3)
-        self.assertEqual(obj.int, 4)
-        self.assertEqual(str(obj), "TestObj(text=b'DEF', short=3, int=4)")
-        self.assertEqual(stream.tell(), obj.struct_len*2)
-
-    def test_from_stream_with_read_len(self):
-        stream = BytesIO(b'ABC\x01\x00\x02\x00\x00\x00DEF\x03\x00\x04\x00\x00\x00')
-        obj = TestObj.from_stream(stream, read_len=TestObj.struct_len+3)
-        self.assertEqual(obj.text, b'ABC')
-        self.assertEqual(obj.short, 1)
-        self.assertEqual(obj.int, 2)
-        self.assertEqual(str(obj), "TestObj(text=b'ABC', short=1, int=2)")
-        self.assertEqual(stream.tell(), obj.struct_len+3)
-
-    def test_to_stream(self):
-        obj = TestObj(text=b'some-text', short=3, int=9)
-        self.assertEqual(obj.to_stream(), b'som\x03\x00\t\x00\x00\x00')

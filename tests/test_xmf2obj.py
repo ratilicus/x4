@@ -6,78 +6,8 @@ import struct
 from io import BytesIO
 from unittest import TestCase
 from unittest.mock import patch, call, MagicMock
-from xmf2obj import XMFException, XMFHeader, XMFChunk, XMFMaterial, XMFReader, StructObjBase, StructObjBaseMeta, \
-    ChunkDataV2, ChunkDataV32, ChunkDataV28, ChunkDataF30, ChunkDataF31
-
-
-class XMFHeaderUnitTest(TestCase):
-    structobj_class = XMFHeader
-
-    def test_baseclass(self):
-        self.assertEqual(self.structobj_class.__bases__, (StructObjBase,))
-
-    def test_fields(self):
-        self.assertEqual(
-            self.structobj_class.fields,
-            'file_type,version,chunk_offset,chunk_count,chunk_size,material_count,vertex_count,index_count'.split(','))
-
-    def test_struct_format(self):
-        self.assertEqual(self.structobj_class.struct_format, b'<4shhBBB3xII42x')
-
-
-class XMFChunkUnitTest(TestCase):
-    structobj_class = XMFChunk
-
-    def test_baseclass(self):
-        self.assertEqual(self.structobj_class.__bases__, (StructObjBase,))
-
-    def test_fields(self):
-        self.assertEqual(
-            self.structobj_class.fields,
-            'id1,part,offset,id2,packed,qty,bytes'.split(','))
-
-    def test_struct_format(self):
-        self.assertEqual(self.structobj_class.struct_format, b'<III8xIIII')
-
-    def test_get_chunk_data_class_V2(self):
-        chunk = XMFChunk(id1=0, id2=2, bytes=12, part=0, offset=0, packed=0, qty=0)
-        self.assertEqual(chunk.get_chunk_data_class(), ChunkDataV2)
-
-    def test_get_chunk_data_class_V32(self):
-        chunk = XMFChunk(id1=0, id2=32, bytes=32, part=0, offset=0, packed=0, qty=0)
-        self.assertEqual(chunk.get_chunk_data_class(), ChunkDataV32)
-
-    def test_get_chunk_data_class_V28(self):
-        chunk = XMFChunk(id1=0, id2=32, bytes=28, part=0, offset=0, packed=0, qty=0)
-        self.assertEqual(chunk.get_chunk_data_class(), ChunkDataV28)
-
-    def test_get_chunk_data_class_F30(self):
-        chunk = XMFChunk(id1=30, id2=30, bytes=12, part=0, offset=0, packed=0, qty=0)
-        self.assertEqual(chunk.get_chunk_data_class(), ChunkDataF30)
-
-    def test_get_chunk_data_class_F31(self):
-        chunk = XMFChunk(id1=30, id2=31, bytes=12, part=0, offset=0, packed=0, qty=0)
-        self.assertEqual(chunk.get_chunk_data_class(), ChunkDataF31)
-
-    def test_get_data_class_other(self):
-        with self.assertRaises(XMFException):
-            chunk = XMFChunk(id1=2, id2=2, bytes=12, part=0, offset=0, packed=0, qty=0)
-            chunk.get_chunk_data_class()
-
-
-class XMFMaterialUnitTest(TestCase):
-    structobj_class = XMFMaterial
-
-    def test_baseclass(self):
-        self.assertEqual(self.structobj_class.__bases__, (StructObjBase,))
-
-    def test_fields(self):
-        self.assertEqual(
-            self.structobj_class.fields,
-            'start,count,name'.split(','))
-
-    def test_struct_format(self):
-        self.assertEqual(self.structobj_class.struct_format, b'<II128s')
+from xmflib import ChunkDataV28, ChunkDataF31
+from xmf2obj import XMFException, XMFChunk, XMFMaterial, XMFReader
 
 
 class XMFReaderUnitTest(TestCase):
