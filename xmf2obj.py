@@ -11,6 +11,7 @@ python 3.6+ required
 XUMF reading logic based on: https://github.com/hhrhhr/Lua-utils-for-X-Rebirth/blob/master/
 """
 
+import gzip
 import sys
 import logging
 import os
@@ -83,6 +84,28 @@ class XMFReader(object):
             for i in range(data_count):
                 data.append(from_stream(stream=chunk_stream, read_len=read_len))
 
+    def add_texture(self, of, material, mat_type, mtl_tag):
+        if material.name == 'p1.multimat':
+            tex_path = f'{self.src_path}/assets/textures/multimat/multimat_{mat_type}.*'
+        elif material.name.startswith('p1'):
+            tex_path = f'{self.src_path}/assets/textures/{(material.name[3:].replace(".", "/"))}*_{mat_type}.*'
+        else:
+            tex_path = f'{self.src_path}/assets/textures/{(material.name.replace(".", "/"))}*_{mat_type}.*'
+        textures = glob.glob(tex_path)
+        if not textures:
+            return
+        texture_name = sorted(textures, key=lambda val: (len(val), val))[0]
+        texture_data = open(texture_name, 'rb').read()
+        texture_name = texture_name.rsplit('/', 1)[1]
+        if texture_name.endswith('.gz'):
+            texture_data = gzip.decompress(texture_data)
+            texture_name = texture_name[:-3] + '.dds'
+        if not os.path.exists(f'{self.obj_path}/tex/{texture_name}'):
+            os.makedirs(f'{self.obj_path}/tex', exist_ok=True)
+            with open(f'{self.obj_path}/tex/{texture_name}', 'wb') as tdf:
+                tdf.write(texture_data)
+        of.write(f'{mtl_tag} ../tex/{texture_name}\n'.encode('ascii'))
+
     def write_material_data(self, of, material):
         of.write(f'newmtl {material.name}\n\n'.encode('ascii'))
         of.write(b'Ka 0.00 0.00 0.00\n')
@@ -90,9 +113,11 @@ class XMFReader(object):
         of.write(b'Ks 1.00 1.00 1.00\n')
         of.write(b'Ns 4.0\n')
         of.write(b'illum 2\n')
-        # of.write(f'map_Kd tex/{material.name}_diff.tga\n'.encode('ascii'))
-        # of.write(f'map_Ks tex/{material.name}_spec.tga\n'.encode('ascii'))
-        # of.write(f'bump_map tex/{material.name}_bump.tga\n'.encode('ascii'))
+        self.add_texture(of, material, 'diff', 'map_Kd')
+        self.add_texture(of, material, 'spec', 'map_Ks')
+        self.add_texture(of, material, 'normal', 'norm')
+        self.add_texture(of, material, 'metal', 'map_Pm')
+
         of.write(b'\n\n')
 
     def write_material_file(self):
@@ -152,6 +177,7 @@ class XMFReader(object):
         logger.info('\nwrite_object_file()')
         os.makedirs(f'{self.obj_path}/{self.file_dir}', exist_ok=True)
         with open(f'{self.obj_path}/{self.file_dir}/{self.file_name}.obj', 'wb') as of:
+            of.write(f'mtllib {self.file_name}.mat\n'.encode('ascii'))
             logger.debug('> write_vertices()')
             self.write_vertices(of)
             logger.debug('> write_faces()')
@@ -230,11 +256,12 @@ class XMFReader(object):
         self.write_object_file()
         self.write_material_file()
 
-    def __init__(self, xmf_filename, obj_path, thumb_path):
+    def __init__(self, xmf_filename, src_path, obj_path, thumb_path):
         self.xmf_filename = xmf_filename
         file_dir, file_name = xmf_filename.rsplit('/', 2)[1:]
         self.file_dir = file_dir[:-5]
         self.file_name = file_name[:-4]
+        self.src_path = src_path
         self.obj_path = obj_path
         self.thumb_path = thumb_path
         self.flags = set()
@@ -257,7 +284,8 @@ if __name__ == '__main__':
         files = sorted(glob.glob(config.SRC + '/assets/units/*/ship_*_data/*_main-lod0.xmf'))
         for filename in files:
             if 'part_main' in filename or 'anim_main' in filename:
-                reader = XMFReader(xmf_filename=filename, obj_path=config.OBJS, thumb_path=config.THUMBS)
+                reader = XMFReader(xmf_filename=filename,
+                                   src_path=config.SRC, obj_path=config.OBJS, thumb_path=config.THUMBS)
                 try:
                     reader.read()
                     reader.gen_thumb()
@@ -267,7 +295,7 @@ if __name__ == '__main__':
                     print(f'\t\t{e}')
 
     else:
-        logger.setLevel(logging.DEBUG)
+        logger.setLevel(logging.INFO)
         filename = sys.argv[1]
         if not filename.endswith('.xmf'):
             # if not provided a full path including name, try to find
@@ -283,6 +311,7 @@ if __name__ == '__main__':
 
         if filename:
             config = get_config()
-            reader = XMFReader(xmf_filename=filename, obj_path=config.OBJS, thumb_path=config.THUMBS)
+            reader = XMFReader(xmf_filename=filename,
+                               src_path=config.SRC, obj_path=config.OBJS, thumb_path=config.THUMBS)
             reader.read()
             reader.gen_thumb()
