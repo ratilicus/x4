@@ -35,11 +35,15 @@ class StructObjBase(object):
     fields = None
     struct = None
     struct_len = None
+    defaults = None
 
     def __init__(self, **kwargs):
-        if set(self.fields) - set(kwargs):
-            raise StructException(f'Missing fields:\n\tpassed: {kwargs}, \n\trequired: {self.fields}')
-        self.__dict__ = kwargs
+        self.__dict__.update(self.defaults or {}, **kwargs)
+        missing_fields = set(self.fields) - set(self.__dict__)
+        if missing_fields:
+            raise StructException(f'Missing fields:\n\tpassed: {kwargs}, \n\t'
+                                  f'required: {self.fields}\n\t'
+                                  f'missing: {missing_fields}')
 
     @classmethod
     def from_stream(cls, stream, read_len=0):
@@ -47,8 +51,9 @@ class StructObjBase(object):
         stream.seek(max(0, read_len - obj.struct_len), 1)
         return obj
 
-    def to_stream(self):
-        return self.struct.pack(*(self.__dict__[f] for f in self.fields))
+    def to_stream(self, write_len=0):
+        data = self.struct.pack(*(self.__dict__[f] for f in self.fields))
+        return data + b'\x00'*max(0, write_len-self.struct_len)
 
     def __repr__(self):
         return '%s(%s)' % (self.class_name, ', '.join('%s=%r' % (f, self.__dict__[f]) for f in self.fields))
@@ -59,8 +64,10 @@ class XMFException(Exception):
 
 
 class XMFHeader(StructObjBase, metaclass=StructObjBaseMeta):
-    fields = 'file_type,version,chunk_offset,chunk_count,chunk_size,material_count,vertex_count,index_count'
-    struct_format = b'<4shhBBB3xII42x'
+    fields = 'file_type,version,chunk_offset,chunk_count,chunk_size,material_count,' \
+             'u1,u2,u3,vertex_count,index_count,u4,u5'
+    struct_format = b'<4shhBBB3BII2I34x'
+    defaults = dict(file_type=b'XUMF', version=3, chunk_offset=64, chunk_size=188, u1=136, u2=1, u3=0, u4=4, u5=0)
 
 
 class ChunkDataV2(StructObjBase, metaclass=StructObjBaseMeta):
@@ -78,7 +85,8 @@ class ChunkDataV32(StructObjBase, metaclass=StructObjBaseMeta):
 class ChunkDataV28(StructObjBase, metaclass=StructObjBaseMeta):
     flags = {VERTEX, NORMAL, UV}
     fields = 'x,y,z,nx,ny,nz,tx,ty,tz,tu,tv'
-    struct_format = '<fffBBBxBBBxff'
+    struct_format = '<fffBBBxBBBxee'
+    defaults = dict(tx=0, ty=0, tz=0)
 
 
 class ChunkDataF30(StructObjBase, metaclass=StructObjBaseMeta):
@@ -94,8 +102,9 @@ class ChunkDataF31(StructObjBase, metaclass=StructObjBaseMeta):
 
 
 class XMFChunk(StructObjBase, metaclass=StructObjBaseMeta):
-    fields = 'id1,part,offset,id2,packed,qty,bytes'
-    struct_format = b'<III8xIIII'
+    fields = 'id1,part,offset,one1,id2,packed,qty,bytes,one2'
+    struct_format = b'<IIII4xIIIII'
+    defaults = dict(one1=1, one2=1, part=0)
     id1 = None
     id2 = None
     bytes = None
@@ -124,4 +133,3 @@ class XMFChunk(StructObjBase, metaclass=StructObjBaseMeta):
 class XMFMaterial(StructObjBase, metaclass=StructObjBaseMeta):
     fields = 'start,count,name'
     struct_format = b'<II128s'
-

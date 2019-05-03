@@ -14,6 +14,7 @@ from xmflib import StructException, StructObjBaseMeta, StructObjBase, XMFHeader,
 class TestObj(StructObjBase, metaclass=StructObjBaseMeta):
     fields = 'text,short,int'
     struct_format = b'<3shi'
+    defaults = dict(text=b'default')
 
 
 class StructObjUnitTest(TestCase):
@@ -71,10 +72,11 @@ class XMFHeaderUnitTest(TestCase):
     def test_fields(self):
         self.assertEqual(
             self.structobj_class.fields,
-            'file_type,version,chunk_offset,chunk_count,chunk_size,material_count,vertex_count,index_count'.split(','))
+            'file_type,version,chunk_offset,chunk_count,chunk_size,material_count,' \
+            'u1,u2,u3,vertex_count,index_count,u4,u5'.split(','))
 
     def test_struct_format(self):
-        self.assertEqual(self.structobj_class.struct_format, b'<4shhBBB3xII42x')
+        self.assertEqual(self.structobj_class.struct_format, b'<4shhBBB3BII2I34x')
 
 
 class XMFChunkUnitTest(TestCase):
@@ -86,10 +88,10 @@ class XMFChunkUnitTest(TestCase):
     def test_fields(self):
         self.assertEqual(
             self.structobj_class.fields,
-            'id1,part,offset,id2,packed,qty,bytes'.split(','))
+            'id1,part,offset,one1,id2,packed,qty,bytes,one2'.split(','))
 
     def test_struct_format(self):
-        self.assertEqual(self.structobj_class.struct_format, b'<III8xIIII')
+        self.assertEqual(self.structobj_class.struct_format, b'<IIII4xIIIII')
 
     def test_get_chunk_data_class_V2(self):
         chunk = XMFChunk(id1=0, id2=2, bytes=12, part=0, offset=0, packed=0, qty=0)
@@ -130,5 +132,3 @@ class XMFMaterialUnitTest(TestCase):
 
     def test_struct_format(self):
         self.assertEqual(self.structobj_class.struct_format, b'<II128s')
-
-

@@ -13,7 +13,7 @@ from xmf2obj import XMFException, XMFChunk, XMFMaterial, XMFReader
 class XMFReaderUnitTest(TestCase):
     def setUp(self) -> None:
         self.reader = XMFReader(xmf_filename='path/to/src/assets/ship_blah_data/part_main-lod0.xmf',
-                                obj_path='path/to/objs', thumb_path='path/to/thumbs')
+                                src_path='path/to/src', obj_path='path/to/objs', thumb_path='path/to/thumbs')
 
     def test_file_dir(self):
         self.assertEqual(self.reader.file_dir, 'ship_blah')

@@ -62,6 +62,8 @@ class XMFReader(object):
 
     def read_chunk_data(self, stream, chunks):
         logger.info('\nread_chunk_data(ct=%d)', len(chunks))
+        self.vertices = []
+        self.faces = []
         self.flags = set()
         start_offset = stream.tell()
         for chunk in chunks:
@@ -264,11 +266,12 @@ class XMFReader(object):
         self.src_path = src_path
         self.obj_path = obj_path
         self.thumb_path = thumb_path
-        self.flags = set()
-        self.chunks = []
-        self.materials = []
-        self.vertices = []
-        self.faces = []
+        self.header = None
+        self.flags = None
+        self.chunks = None
+        self.materials = None
+        self.vertices = None
+        self.faces = None
 
 
 if __name__ == '__main__':
