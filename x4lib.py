@@ -1,12 +1,18 @@
 import logging
+import sys
 import os
 import os.path
 from copy import deepcopy
 from xml.etree import ElementTree
-from struct import calcsize, Struct
 import csv
 
 logger = logging.getLogger('x4.' + __name__)
+
+
+def require_python_version(major, minor):
+    if sys.version_info.major < major or sys.version_info.minor < minor:
+        logger.error('This script requires python 3.6 or higher.')
+        exit(0)
 
 
 def get_config():
@@ -90,21 +96,3 @@ class ModUtilMixin(object):
                 rows.append({h: d for h, d in zip(header, row[1:])})
 
 
-class StructObjBaseMeta(type):
-    def __init__(cls, name, bases, namespace):
-        super(StructObjBaseMeta, cls).__init__(name, bases, namespace)
-        cls.fields = cls.fields.split(',')
-        cls.struct_len = calcsize(cls.struct_format)
-        cls.struct = Struct(cls.struct_format)
-
-
-class StructObjBase(object):
-    def __init__(self, stream, **kwargs):
-        self.__dict__ = {k: v for k, v in zip(self.fields, self.struct.unpack(stream.read(self.struct_len)))}
-        self.init(stream, **kwargs)
-
-    def __str__(self):
-        return '%s(%s)' % (self.__class__.__name__, ', '.join('%s=%r' % (f, v) for f, v in self.__dict__.items()))
-
-    def init(self, stream, **kwargs):
-        pass

@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 
 """
 Pack mods/{mod name}/* mod files into {game dir}/extensions/{mod name}/* (cat+dat)
@@ -7,9 +7,10 @@ Use: python3 pack_mod.py {mod name}
 
 import sys
 import logging
-from x4lib import get_config
+from x4lib import get_config, require_python_version
 from pack_x4 import pack_path
 
+require_python_version(3, 5)
 logger = logging.getLogger('x4.' + __name__)
 
 
