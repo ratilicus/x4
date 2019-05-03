@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 
 """
 Extract xml scripts into source dir
@@ -9,8 +9,9 @@ import os
 import sys
 import os.path
 import logging
-from x4lib import get_config
+from x4lib import get_config, require_python_version
 
+require_python_version(3, 5)
 logger = logging.getLogger('x4.' + __name__)
 
 

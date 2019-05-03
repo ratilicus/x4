@@ -10,4 +10,5 @@ X4 = \"$X4\"
 SRC = \"$PWD/src\"
 MODS = \"$PWD/mods\"
 OBJS = \"$PWD/objs\"
+THUMBS = \"$PWD/thumbs\"
 " > $PWD/config.py
