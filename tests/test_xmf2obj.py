@@ -13,7 +13,14 @@ from xmf2obj import XMFException, XMFChunk, XMFMaterial, XMFReader
 class XMFReaderUnitTest(TestCase):
     def setUp(self) -> None:
         self.reader = XMFReader(xmf_filename='path/to/src/assets/ship_blah_data/part_main-lod0.xmf',
-                                src_path='path/to/src', obj_path='path/to/objs', thumb_path='path/to/thumbs')
+                                src_path='path/to/src', obj_path='path/to/objs', thumb_path='path/to/thumbs',
+                                mat_xml=MagicMock())
+
+    @patch('xmf2obj.XMFReader.read_xml')
+    def test_get_material_library(self, patch_read_xml):
+        src_path = 'some/src/path'
+        self.assertEqual(XMFReader.get_material_library(src_path), patch_read_xml.return_value)
+        patch_read_xml.assert_called_once_with(f'{src_path}/libraries/material_library.xml')
 
     def test_file_dir(self):
         self.assertEqual(self.reader.file_dir, 'ship_blah')
@@ -130,5 +137,113 @@ class XMFReaderUnitTest(TestCase):
 
         self.assertEqual(self.reader.vertices, list(range(1, 11)))
         self.assertEqual(self.reader.faces, list(range(11,16)))
-
         self.assertEqual(self.reader.flags, ChunkDataV28.flags | ChunkDataF31.flags)
+
+    @patch('builtins.open')
+    def test_read_texture(self, patch_open):
+        texture_filename = 'src/assets/textures/multimat/multimat_02_diff.dds'
+        self.assertEqual(self.reader.read_texture(texture_filename),
+                         ('multimat_02_diff.dds', patch_open.return_value.read.return_value))
+        patch_open.assert_called_once_with(texture_filename, 'rb')
+        patch_open.return_value.read.assert_called_once_with()
+
+    @patch('xmf2obj.gzip')
+    @patch('builtins.open')
+    def test_read_texture_compressed(self, patch_open, patch_gzip):
+        texture_filename = 'src/assets/textures/multimat/multimat_02_diff.gz'
+        self.assertEqual(self.reader.read_texture(texture_filename),
+                         ('multimat_02_diff.dds', patch_gzip.decompress.return_value))
+        patch_gzip.decompress.assert_called_once_with(patch_open.return_value.read.return_value)
+        patch_open.assert_called_once_with(texture_filename, 'rb')
+        patch_open.return_value.read.assert_called_once_with()
+
+    @patch('xmf2obj.os.path.exists', return_value=True)
+    @patch('builtins.open')
+    def test_write_texture_already_exists(self, patch_open, patch_os_path_exists):
+        texture_name = 'multimat_02_diff.dds'
+        texture_data = MagicMock()
+        self.reader.write_texture(texture_name, texture_data)
+        patch_os_path_exists.assert_called_once_with(f'{self.reader.obj_path}/tex/{texture_name}')
+        self.assertEqual(patch_open.call_count, 0)
+
+    @patch('xmf2obj.os')
+    @patch('builtins.open')
+    def test_write_texture_new(self, patch_open, patch_os):
+        patch_os.path.exists.return_value = False
+        texture_name = 'multimat_02_diff.dds'
+        texture_data = MagicMock()
+        self.reader.write_texture(texture_name, texture_data)
+        patch_os.path.exists.assert_called_once_with(f'{self.reader.obj_path}/tex/{texture_name}')
+        patch_os.makedirs(f'{self.reader.obj_path}/tex', exist_ok=True)
+        patch_open.assert_called_once_with(f'{self.reader.obj_path}/tex/{texture_name}', 'wb')
+        patch_open.return_value.__enter__.return_value.write.assert_called_once_with(texture_data)
+
+    def test_add_texture(self):
+        mat_file = MagicMock()
+        mat_xml = MagicMock()
+        self.reader.find_texture = MagicMock(return_value='src/assets/textures/multimat/multimat_02_diff.gz')
+        self.reader.read_texture = MagicMock(return_value=('multimat_02_diff.dds', 'some-texture-data'))
+        self.reader.write_texture = MagicMock()
+
+        self.reader.add_texture(mat_file, mat_xml, 'diff', 'map_Kd')
+        self.reader.find_texture.assert_called_once_with(mat_xml, 'diff')
+        self.reader.read_texture.assert_called_once_with('src/assets/textures/multimat/multimat_02_diff.gz')
+        self.reader.write_texture.assert_called_once_with('multimat_02_diff.dds', 'some-texture-data')
+        mat_file.write.assert_called_once_with(b'map_Kd ../tex/multimat_02_diff.dds\n')
+
+    def test_add_texture_none_found(self):
+        mat_file = MagicMock()
+        mat_xml = MagicMock()
+        self.reader.find_texture = MagicMock(return_value=None)
+        self.reader.read_texture = MagicMock()
+        self.reader.write_texture = MagicMock()
+
+        self.reader.add_texture(mat_file, mat_xml, 'diff', 'map_Kd')
+        self.reader.find_texture.assert_called_once_with(mat_xml, 'diff')
+        self.assertEqual(self.reader.read_texture.call_count, 0)
+        self.assertEqual(self.reader.write_texture.call_count, 0)
+        self.assertEqual(mat_file.write.call_count, 0)
+
+    def test_write_material_data(self):
+        self.reader.add_texture = MagicMock()
+        mat_name = 'p1.multimat'
+        mat_file = MagicMock()
+        self.reader.write_material_data(mat_file, mat_name)
+        self.assertEqual(mat_file.write.call_count, 7)
+        mat_file.assert_has_calls([
+            call.write(b'newmtl p1.multimat\n\n'),
+            call.write(b'Ka 0.00 0.00 0.00\n'),
+            call.write(b'Kd 1.00 1.00 1.00\n'),
+            call.write(b'Ks 1.00 1.00 1.00\n'),
+            call.write(b'Ns 4.0\n'),
+            call.write(b'illum 2\n'),
+            call.write(b'\n\n'),
+        ])
+        self.assertEqual(self.reader.add_texture.call_count, 4)
+        self.reader.add_texture.assert_has_calls([
+            call(mat_file, self.reader.mat_xml.find.return_value, 'diffuse_map', 'map_Kd'),
+            call(mat_file, self.reader.mat_xml.find.return_value, 'smooth_map', 'map_Ks'),
+            call(mat_file, self.reader.mat_xml.find.return_value, 'normal_map', 'norm'),
+            call(mat_file, self.reader.mat_xml.find.return_value, 'Metallness', 'map_Pm'),
+        ])
+        self.reader.mat_xml.find.assert_called_once_with(
+            './collection[@name="p1"]/material[@name="multimat"]/properties')
+
+    @patch('xmf2obj.os')
+    @patch('builtins.open')
+    def test_write_material_file(self, patch_open, patch_os):
+        self.reader.write_material_data = MagicMock()
+        self.reader.materials = [
+            XMFMaterial(name=b'mat1', start=0, count=10),
+            XMFMaterial(name=b'mat2', start=10, count=10),
+            XMFMaterial(name=b'mat3', start=20, count=10),
+        ]
+        self.reader.write_material_file()
+        patch_os.makedirs.assert_called_once_with(f'{self.reader.obj_path}/{self.reader.file_dir}', exist_ok=True)
+        patch_open.assert_called_once_with(
+            f'{self.reader.obj_path}/{self.reader.file_dir}/{self.reader.file_name}.mat', 'wb')
+        self.reader.write_material_data.assert_has_calls([
+            call(patch_open.return_value.__enter__.return_value, b'mat1'),
+            call(patch_open.return_value.__enter__.return_value, b'mat2'),
+            call(patch_open.return_value.__enter__.return_value, b'mat3'),
+        ])

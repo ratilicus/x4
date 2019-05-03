@@ -19,17 +19,21 @@ import zlib
 import glob
 from io import BytesIO
 from PIL import Image, ImageDraw
-from x4lib import get_config, require_python_version
+from x4lib import get_config, require_python_version, ModUtilMixin
 from xmflib import XMFException, XMFHeader, XMFChunk, XMFMaterial, VERTEX, NORMAL, UV
 
 require_python_version(3, 6)
 logger = logging.getLogger('x4.' + __name__)
 
 
-class XMFReader(object):
+class XMFReader(ModUtilMixin):
     header_class = XMFHeader
     chunk_class = XMFChunk
     material_class = XMFMaterial
+
+    @classmethod
+    def get_material_library(cls, src_path):
+        return cls.read_xml(f'{src_path}/libraries/material_library.xml')
 
     def get_header(self, stream):
         logger.info('\nget_header()')
@@ -86,49 +90,64 @@ class XMFReader(object):
             for i in range(data_count):
                 data.append(from_stream(stream=chunk_stream, read_len=read_len))
 
-    def add_texture(self, of, material, mat_type, mtl_tag):
-        if material.name == 'p1.multimat':
-            tex_path = f'{self.src_path}/assets/textures/multimat/multimat_{mat_type}.*'
-        elif material.name.startswith('p1'):
-            tex_path = f'{self.src_path}/assets/textures/{(material.name[3:].replace(".", "/"))}*_{mat_type}.*'
-        else:
-            tex_path = f'{self.src_path}/assets/textures/{(material.name.replace(".", "/"))}*_{mat_type}.*'
-        textures = glob.glob(tex_path)
-        if not textures:
-            return
-        texture_name = sorted(textures, key=lambda val: (len(val), val))[0]
-        texture_data = open(texture_name, 'rb').read()
-        texture_name = texture_name.rsplit('/', 1)[1]
-        if texture_name.endswith('.gz'):
+    def find_texture(self, mat_xml, mat_type):
+        texture_name = mat_xml.find(f'./property[@name="{mat_type}"]')
+        if texture_name is None:
+            return None
+        value = texture_name.get("value").replace('\\', '/')
+        if os.path.exists(f'{self.src_path}/{value}.dds'):
+            return f'{self.src_path}/{value}.dds'
+        elif os.path.exists(f'{self.src_path}/{value}.gz'):
+            return f'{self.src_path}/{value}.gz'
+
+    def read_texture(self, texture_filename):
+        texture_name = texture_filename.rsplit('/', 1)[1]
+        texture_data = open(texture_filename, 'rb').read()
+        if texture_filename.endswith('.gz'):
             texture_data = gzip.decompress(texture_data)
             texture_name = texture_name[:-3] + '.dds'
+        return texture_name, texture_data
+
+    def write_texture(self, texture_name, texture_data):
         if not os.path.exists(f'{self.obj_path}/tex/{texture_name}'):
             os.makedirs(f'{self.obj_path}/tex', exist_ok=True)
-            with open(f'{self.obj_path}/tex/{texture_name}', 'wb') as tdf:
-                tdf.write(texture_data)
-        of.write(f'{mtl_tag} ../tex/{texture_name}\n'.encode('ascii'))
+            with open(f'{self.obj_path}/tex/{texture_name}', 'wb') as out_file:
+                out_file.write(texture_data)
 
-    def write_material_data(self, of, material):
-        of.write(f'newmtl {material.name}\n\n'.encode('ascii'))
-        of.write(b'Ka 0.00 0.00 0.00\n')
-        of.write(b'Kd 1.00 1.00 1.00\n')
-        of.write(b'Ks 1.00 1.00 1.00\n')
-        of.write(b'Ns 4.0\n')
-        of.write(b'illum 2\n')
-        self.add_texture(of, material, 'diff', 'map_Kd')
-        self.add_texture(of, material, 'spec', 'map_Ks')
-        self.add_texture(of, material, 'normal', 'norm')
-        self.add_texture(of, material, 'metal', 'map_Pm')
+    def add_texture(self, mat_file, mat_xml, mat_type, mtl_tag):
+        texture_filename = self.find_texture(mat_xml, mat_type)
+        if not texture_filename:
+            return
+        texture_name, texture_data = self.read_texture(texture_filename)
+        self.write_texture(texture_name, texture_data)
+        mat_file.write(f'{mtl_tag} ../tex/{texture_name}\n'.encode('ascii'))
 
-        of.write(b'\n\n')
+    def write_material_data(self, mat_file, mat_name):
+        collection, name = mat_name.split('.')
+        mat_xml = self.mat_xml.find(f'./collection[@name="{collection}"]/material[@name="{name}"]/properties')
+
+        mat_file.write(f'newmtl {mat_name}\n\n'.encode('ascii'))
+        mat_file.write(b'Ka 0.00 0.00 0.00\n')
+        mat_file.write(b'Kd 1.00 1.00 1.00\n')
+        mat_file.write(b'Ks 1.00 1.00 1.00\n')
+        mat_file.write(b'Ns 4.0\n')
+        mat_file.write(b'illum 2\n')
+
+        if mat_xml is not None:
+            self.add_texture(mat_file, mat_xml, 'diffuse_map', 'map_Kd')
+            self.add_texture(mat_file, mat_xml, 'smooth_map', 'map_Ks')
+            self.add_texture(mat_file, mat_xml, 'normal_map', 'norm')
+            self.add_texture(mat_file, mat_xml, 'Metallness', 'map_Pm')
+
+        mat_file.write(b'\n\n')
 
     def write_material_file(self):
         logger.info('\nwrite_material_file()')
         os.makedirs(f'{self.obj_path}/{self.file_dir}', exist_ok=True)
-        with open(f'{self.obj_path}/{self.file_dir}/{self.file_name}.mat', 'wb') as of:
+        with open(f'{self.obj_path}/{self.file_dir}/{self.file_name}.mat', 'wb') as mat_file:
             for material in self.materials:
                 logger.debug('> write_material_data(%s)', material)
-                self.write_material_data(of, material)
+                self.write_material_data(mat_file, material.name)
 
     def write_vertices(self, of):
         has_normals = NORMAL in self.flags
@@ -137,7 +156,6 @@ class XMFReader(object):
         normals = [b'\n']
         uvs = [b'\n']
         bad_uv = False
-        max_u, min_u = -20000, 20000
         for o in self.vertices:
             vertices.append(f'v {(-o.x):.3f} {o.y:.3f} {o.z:.3f}\n'.encode('ascii'))
             if has_normals:
@@ -146,14 +164,9 @@ class XMFReader(object):
                 uvs.append(f'vt {o.tu:.3f} {1.0-o.tv:.3f}\n'.encode('ascii'))
                 if abs(o.tu) > 20000:
                     bad_uv = True
-                    if o.tu > max_u:
-                        max_u = o.tu
-                    if o.tu < min_u:
-                        min_u = o.tu
         if bad_uv:
             # when uvs are unpacked in incorrect format these values are out of range
-            print(f'\tINVALID UVs ({min_u} - {max_u})')
-            raise
+            raise XMFException('Invalid UVs')
 
         of.writelines(vertices)
         if has_normals:
@@ -249,6 +262,9 @@ class XMFReader(object):
 
     def read(self):
         logger.info('read()')
+        if self.mat_xml is None:
+            self.mat_xml = self.get_material_library(src_path=self.src_path)
+
         with open(self.xmf_filename, 'rb') as stream:
             self.header = self.get_header(stream=stream)
             self.chunks = self.get_chunks(stream=stream, header=self.header)
@@ -258,7 +274,7 @@ class XMFReader(object):
         self.write_object_file()
         self.write_material_file()
 
-    def __init__(self, xmf_filename, src_path, obj_path, thumb_path):
+    def __init__(self, xmf_filename, src_path, obj_path, thumb_path, mat_xml=None):
         self.xmf_filename = xmf_filename
         file_dir, file_name = xmf_filename.rsplit('/', 2)[1:]
         self.file_dir = file_dir[:-5]
@@ -266,6 +282,7 @@ class XMFReader(object):
         self.src_path = src_path
         self.obj_path = obj_path
         self.thumb_path = thumb_path
+        self.mat_xml = mat_xml
         self.header = None
         self.flags = None
         self.chunks = None
@@ -284,10 +301,11 @@ if __name__ == '__main__':
     elif sys.argv[1] == '--all':
         logger.setLevel(logging.ERROR)
         config = get_config()
+        mat_xml = XMFReader.get_material_library(src_path=config.SRC)
         files = sorted(glob.glob(config.SRC + '/assets/units/*/ship_*_data/*_main-lod0.xmf'))
         for filename in files:
             if 'part_main' in filename or 'anim_main' in filename:
-                reader = XMFReader(xmf_filename=filename,
+                reader = XMFReader(xmf_filename=filename, mat_xml=mat_xml,
                                    src_path=config.SRC, obj_path=config.OBJS, thumb_path=config.THUMBS)
                 try:
                     reader.read()
