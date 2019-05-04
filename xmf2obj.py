@@ -95,10 +95,10 @@ class XMFReader(ModUtilMixin):
         if texture_name is None:
             return None
         value = texture_name.get("value").replace('\\', '/')
-        if os.path.exists(f'{self.src_path}/{value}.dds'):
-            return f'{self.src_path}/{value}.dds'
-        elif os.path.exists(f'{self.src_path}/{value}.gz'):
+        if os.path.exists(f'{self.src_path}/{value}.gz'):
             return f'{self.src_path}/{value}.gz'
+        elif os.path.exists(f'{self.src_path}/{value}.dds'):
+            return f'{self.src_path}/{value}.dds'
 
     def read_texture(self, texture_filename):
         texture_name = texture_filename.rsplit('/', 1)[1]
@@ -124,7 +124,7 @@ class XMFReader(ModUtilMixin):
 
     def write_material_data(self, mat_file, mat_name):
         collection, name = mat_name.split('.')
-        mat_xml = self.mat_xml.find(f'./collection[@name="{collection}"]/material[@name="{name}"]/properties')
+        mat_xml = self.mat_lib_xml.find(f'./collection[@name="{collection}"]/material[@name="{name}"]/properties')
 
         mat_file.write(f'newmtl {mat_name}\n\n'.encode('ascii'))
         mat_file.write(b'Ka 0.00 0.00 0.00\n')
@@ -149,7 +149,7 @@ class XMFReader(ModUtilMixin):
                 logger.debug('> write_material_data(%s)', material)
                 self.write_material_data(mat_file, material.name)
 
-    def write_vertices(self, of):
+    def write_vertices(self, obj_file):
         has_normals = NORMAL in self.flags
         has_uvs = UV in self.flags
         vertices = []
@@ -159,7 +159,8 @@ class XMFReader(ModUtilMixin):
         for o in self.vertices:
             vertices.append(f'v {(-o.x):.3f} {o.y:.3f} {o.z:.3f}\n'.encode('ascii'))
             if has_normals:
-                normals.append(f'vn {(127-o.nz)/128:.3f} {(o.ny-127)/128:.3f} {(o.nx-127)/128:.3f}\n'.encode('ascii'))
+                normals.append(f'vn {(127.5-o.nz)/127.5:.3f} {(o.ny-127.5)/127.5:.3f} {(o.nx-127.5)/127.5:.3f}\n'
+                               .encode('ascii'))
             if has_uvs:
                 uvs.append(f'vt {o.tu:.3f} {1.0-o.tv:.3f}\n'.encode('ascii'))
                 if abs(o.tu) > 20000:
@@ -168,42 +169,46 @@ class XMFReader(ModUtilMixin):
             # when uvs are unpacked in incorrect format these values are out of range
             raise XMFException('Invalid UVs')
 
-        of.writelines(vertices)
+        obj_file.writelines(vertices)
         if has_normals:
-            of.writelines(normals)
+            obj_file.writelines(normals)
         if has_uvs:
-            of.writelines(uvs)
+            obj_file.writelines(uvs)
 
-    def write_faces(self, of):
-        of.write(b'\n')
+    def write_faces(self, obj_file):
+        obj_file.write(b'\n')
         if self.materials:
             for i, mat in enumerate(self.materials):
-                of.write(f'g group{i}\n'.encode('ascii'))
-                of.write(f'usemtl {mat.name}\n'.encode('ascii'))
+                obj_file.write(f'g group{i}\n'.encode('ascii'))
+                obj_file.write(f'usemtl {mat.name}\n'.encode('ascii'))
                 for f in self.faces[mat.start//3: mat.start+mat.count//3]:
-                    of.write(f'f {f.i0+1}/{f.i0+1}/{f.i0+1} {f.i1+1}/{f.i1+1}/{f.i1+1} {f.i2+1}/{f.i2+1}/{f.i2+1}\n'
-                             .encode('ascii'))
-                of.write(b'\n')
+                    obj_file.write(f'f {f.i0+1}/{f.i0+1}/{f.i0+1} '
+                                   f'{f.i1+1}/{f.i1+1}/{f.i1+1} '
+                                   f'{f.i2+1}/{f.i2+1}/{f.i2+1}\n'.encode('ascii'))
+                obj_file.write(b'\n')
         else:
             for f in self.faces:
-                of.write(f'f {f.i0+1} {f.i1+1} {f.i2+1}\n'.encode('ascii'))
+                obj_file.write(f'f {f.i0+1} {f.i1+1} {f.i2+1}\n'.encode('ascii'))
 
     def write_object_file(self):
         logger.info('\nwrite_object_file()')
         os.makedirs(f'{self.obj_path}/{self.file_dir}', exist_ok=True)
-        with open(f'{self.obj_path}/{self.file_dir}/{self.file_name}.obj', 'wb') as of:
-            of.write(f'mtllib {self.file_name}.mat\n'.encode('ascii'))
+        with open(f'{self.obj_path}/{self.file_dir}/{self.file_name}.obj', 'wb') as obj_file:
+            obj_file.write(f'mtllib {self.file_name}.mat\n'.encode('ascii'))
             logger.debug('> write_vertices()')
-            self.write_vertices(of)
+            self.write_vertices(obj_file)
             logger.debug('> write_faces()')
-            self.write_faces(of)
+            self.write_faces(obj_file)
 
     def gen_thumb(self):
         logger.info('\ngen_thumb()')
         img = Image.new("RGB", (900, 315), "#FFFFFF")
         draw = ImageDraw.Draw(img)
+
+        # ~random colors generator
         colors = ((((i*64621)**2) % 256, (((i*12415)**4) % 256), (((i*834793)*3) % 256)) for i in range(256))
 
+        # draw grid lines
         for c in range(0, 900//150*5):
             i = c*(150.0/5)
             draw.line([i, 0, i, 300], fill=(192, 192, 192))
@@ -220,6 +225,7 @@ class XMFReader(ModUtilMixin):
         draw.line([300, 0, 300, 300], fill=(255, 255, 255))
         draw.line([600, 0, 600, 300], fill=(255, 255, 255))
 
+        # calculate the extents of all the vertices (to figure out how to scale the object, and to display object size)
         max_extent = 0.0
         extents = [[0, 0, 0], [0, 0, 0], [0, 0, 0]]
         for v in self.vertices:
@@ -235,20 +241,28 @@ class XMFReader(ModUtilMixin):
         extents[1][2] = extents[1][1] - extents[1][0]
         extents[2][2] = extents[2][1] - extents[2][0]
 
-        for m in self.materials:
+        # draw all the object faces in 3 different views, grouped by materials/colors
+        for mat in self.materials:
+            # get ~random color
             color = next(colors)
-            for f in self.faces[m.start//3: m.start//3+m.count//3]:
+
+            # draw all the faces for a given material/color
+            for f in self.faces[mat.start//3: mat.start//3 + mat.count//3]:
                 verts = [self.vertices[f.i0], self.vertices[f.i1], self.vertices[f.i2]]
 
+                # draw faces in X/Y plane
                 pos = [(150+150*v.x//max_extent, 150-150*v.y//max_extent) for v in verts]
                 draw.polygon(pos, fill=color)
 
+                # draw faces in X/Z plane
                 pos = [(450+150*v.x//max_extent, 150+150*v.z//max_extent) for v in verts]
                 draw.polygon(pos, fill=color)
 
+                # draw faces in Y/Z plane
                 pos = [(750-150*v.y//max_extent, 150+150*v.z//max_extent) for v in verts]
                 draw.polygon(pos, fill=color)
 
+        # display the object size on the image
         s = 'SIZE: %0.1fm x %0.1fm x %0.1fm' % (
             extents[0][2],
             extents[1][2],
@@ -257,13 +271,15 @@ class XMFReader(ModUtilMixin):
         s += ' | SQR SIZE: %0.1fm' % (max_extent/5)
         draw.text((3, 303), s, fill=(0, 0, 0))
 
+        # write the image to file
         os.makedirs(self.thumb_path, exist_ok=True)
         img.save(f'{self.thumb_path}/{self.file_dir}.gif', "GIF")
+        return extents
 
     def read(self):
         logger.info('read()')
-        if self.mat_xml is None:
-            self.mat_xml = self.get_material_library(src_path=self.src_path)
+        if self.mat_lib_xml is None:
+            self.mat_lib_xml = self.get_material_library(src_path=self.src_path)
 
         with open(self.xmf_filename, 'rb') as stream:
             self.header = self.get_header(stream=stream)
@@ -274,7 +290,7 @@ class XMFReader(ModUtilMixin):
         self.write_object_file()
         self.write_material_file()
 
-    def __init__(self, xmf_filename, src_path, obj_path, thumb_path, mat_xml=None):
+    def __init__(self, xmf_filename, src_path, obj_path, thumb_path, mat_lib_xml=None):
         self.xmf_filename = xmf_filename
         file_dir, file_name = xmf_filename.rsplit('/', 2)[1:]
         self.file_dir = file_dir[:-5]
@@ -282,7 +298,7 @@ class XMFReader(ModUtilMixin):
         self.src_path = src_path
         self.obj_path = obj_path
         self.thumb_path = thumb_path
-        self.mat_xml = mat_xml
+        self.mat_lib_xml = mat_lib_xml
         self.header = None
         self.flags = None
         self.chunks = None
@@ -301,11 +317,11 @@ if __name__ == '__main__':
     elif sys.argv[1] == '--all':
         logger.setLevel(logging.ERROR)
         config = get_config()
-        mat_xml = XMFReader.get_material_library(src_path=config.SRC)
+        mat_lib_xml = XMFReader.get_material_library(src_path=config.SRC)
         files = sorted(glob.glob(config.SRC + '/assets/units/*/ship_*_data/*_main-lod0.xmf'))
         for filename in files:
             if 'part_main' in filename or 'anim_main' in filename:
-                reader = XMFReader(xmf_filename=filename, mat_xml=mat_xml,
+                reader = XMFReader(xmf_filename=filename, mat_lib_xml=mat_lib_xml,
                                    src_path=config.SRC, obj_path=config.OBJS, thumb_path=config.THUMBS)
                 try:
                     reader.read()
