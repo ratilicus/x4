@@ -11,8 +11,9 @@ This repo has a number of scipts to allow:
 take those template macros and replace key values specified in the csv file
 - you can make further changes to the xml files that were compiled, and re-running the compile script will only
 replace the key values from the csv without losing any of the other changes
-- pack_.mod.py: pack your MOD dir files into cat/dat and place them inside your X4/extensions dir, so you can test
+- pack_mod.py: pack your MOD dir files into cat/dat and place them inside your X4/extensions dir, so you can test
   them right away in your game  
+- xmf2obj.py: extracting model data and textures and writing obj files that can be opened in Blender, etc
 
 
 ###### Finding Macros
@@ -70,6 +71,7 @@ updating the macro and component values with the ones in the csv file.
 - Step 2: extract X4 scripts
   run `python3 extract_x4.py --extract`
   (this should extract all the scripts/xml from the game cats+dats into src/ dir)
+  (run `python3 extract_x4.py --extract --all` if you plan to want to work with the model files)
 
 - Step 3: make modifications
   use:
@@ -110,8 +112,8 @@ updating the macro and component values with the ones in the csv file.
     - adding ships
     - adding weapons
     - adding shields
-- (experimental) added xmf2obj.py script to extract Wavefront obj (can be imported in Blender)
-
+- xmf2obj.py script to extract Wavefront obj (can be imported in Blender)
+    - also this generates thumbnails
 
 ###### Roadmap
 
@@ -161,9 +163,9 @@ Written and tested in the following environment
 - you can then run `python3 pack_mod.py {your-mod-name}` and in your game X4/extensions/ {your-mod-name} dir should
   be created with the content.xml file and ext_01.cat and ext_01.dat files, which is your packed mod
 - you should be able to run your game after this and use your new content
-- if you plan to run the tests, you will need to create a virtualenv with python3.6, source it, and 
-  `pip install -r requirements.txt`, then you can run `./run_tests.sh`
-
+- if you plan to run the tests or xmf2obj.py, you will need to create a virtualenv with python3.6, source it, and 
+  `pip install -r requirements.txt`, then you can run `./run_tests.sh` or './xmf2obj.py --all'
+- for `xmf2obj.py` you can extract specific xmf files, or run `xmf2obj.py --all` to extract all ship models
 
 ###### Testing
 - setup virtualenv (python3)
