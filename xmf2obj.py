@@ -38,7 +38,8 @@ class XMFReader(ModUtilMixin):
     def get_header(self, stream):
         logger.info('\nget_header()')
         header = self.header_class.from_stream(stream)
-        if not (header.file_type == b'XUMF' and header.version == 3 and header.chunk_offset == 64):
+        if not (header.file_type == b'XUMF' and header.version == 3 and
+                header.chunk_offset == 64 and header.chunk_size == 188):
             raise XMFException('get_header: invalid file type!')
         logger.debug('> info: %s', header)
         return header
@@ -200,6 +201,19 @@ class XMFReader(ModUtilMixin):
             logger.debug('> write_faces()')
             self.write_faces(obj_file)
 
+    def read_xmf(self):
+        with open(self.xmf_filename, 'rb') as stream:
+            self.header = self.get_header(stream=stream)
+            self.chunks = self.get_chunks(stream=stream, header=self.header)
+            self.materials = self.get_materials(stream=stream, header=self.header)
+            self.read_chunk_data(stream=stream, chunks=self.chunks)
+
+    def write_obj(self):
+        if self.mat_lib_xml is None:
+            self.mat_lib_xml = self.get_material_library(src_path=self.src_path)
+        self.write_object_file()
+        self.write_material_file()
+
     def gen_thumb(self):
         logger.info('\ngen_thumb()')
         img = Image.new("RGB", (900, 315), "#FFFFFF")
@@ -276,20 +290,6 @@ class XMFReader(ModUtilMixin):
         img.save(f'{self.thumb_path}/{self.file_dir}.gif', "GIF")
         return extents
 
-    def read(self):
-        logger.info('read()')
-        if self.mat_lib_xml is None:
-            self.mat_lib_xml = self.get_material_library(src_path=self.src_path)
-
-        with open(self.xmf_filename, 'rb') as stream:
-            self.header = self.get_header(stream=stream)
-            self.chunks = self.get_chunks(stream=stream, header=self.header)
-            self.materials = self.get_materials(stream=stream, header=self.header)
-            self.read_chunk_data(stream=stream, chunks=self.chunks)
-
-        self.write_object_file()
-        self.write_material_file()
-
     def __init__(self, xmf_filename, src_path, obj_path, thumb_path, mat_lib_xml=None):
         self.xmf_filename = xmf_filename
         file_dir, file_name = xmf_filename.rsplit('/', 2)[1:]
@@ -324,7 +324,8 @@ if __name__ == '__main__':
                 reader = XMFReader(xmf_filename=filename, mat_lib_xml=mat_lib_xml,
                                    src_path=config.SRC, obj_path=config.OBJS, thumb_path=config.THUMBS)
                 try:
-                    reader.read()
+                    reader.read_xmf()
+                    reader.write_obj()
                     reader.gen_thumb()
                     print(f'processing {filename}.. successful!')
                 except XMFException as e:
@@ -350,5 +351,6 @@ if __name__ == '__main__':
             config = get_config()
             reader = XMFReader(xmf_filename=filename,
                                src_path=config.SRC, obj_path=config.OBJS, thumb_path=config.THUMBS)
-            reader.read()
+            reader.read_xmf()
+            reader.write_obj()
             reader.gen_thumb()

@@ -88,10 +88,10 @@ class XMFChunkUnitTest(TestCase):
     def test_fields(self):
         self.assertEqual(
             self.structobj_class.fields,
-            'id1,part,offset,one1,id2,packed,qty,bytes,one2'.split(','))
+            'id1,part,offset,one1,id2,packed,qty,bytes,one2,extra_data'.split(','))
 
     def test_struct_format(self):
-        self.assertEqual(self.structobj_class.struct_format, b'<IIII4xIIIII')
+        self.assertEqual(self.structobj_class.struct_format, b'<IIII4xIIIII16x132s')
 
     def test_get_chunk_data_class_V2(self):
         chunk = XMFChunk(id1=0, id2=2, bytes=12, part=0, offset=0, packed=0, qty=0)

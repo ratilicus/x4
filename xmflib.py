@@ -36,6 +36,7 @@ class StructObjBase(object):
     struct = None
     struct_len = None
     defaults = None
+    skipped_data = None
 
     def __init__(self, **kwargs):
         self.__dict__.update(self.defaults or {}, **kwargs)
@@ -48,7 +49,7 @@ class StructObjBase(object):
     @classmethod
     def from_stream(cls, stream, read_len=0):
         obj = cls(**{k: v for k, v in zip(cls.fields, cls.struct.unpack(stream.read(cls.struct_len)))})
-        stream.seek(max(0, read_len - obj.struct_len), 1)
+        obj.skipped_data = stream.read(max(0, read_len - obj.struct_len))
         return obj
 
     def to_stream(self, write_len=0):
@@ -71,18 +72,27 @@ class XMFHeader(StructObjBase, metaclass=StructObjBaseMeta):
 
 
 class ChunkDataV2(StructObjBase, metaclass=StructObjBaseMeta):
+    id1 = 0
+    id2 = 2
     flags = {VERTEX}
     fields = 'x,y,z'
     struct_format = '<fff'
 
 
 class ChunkDataV32(StructObjBase, metaclass=StructObjBaseMeta):
+    id1 = 0
+    id2 = 32
+    min_bytes = 32
     flags = {VERTEX, NORMAL, UV}
     fields = 'x,y,z,nx,ny,nz,tx,ty,tz,tu,tv'
     struct_format = '<fffBBBxBBBxff'
+    defaults = dict(tx=0, ty=0, tz=0)
 
 
 class ChunkDataV28(StructObjBase, metaclass=StructObjBaseMeta):
+    id1 = 0
+    id2 = 32
+    min_bytes = 28
     flags = {VERTEX, NORMAL, UV}
     fields = 'x,y,z,nx,ny,nz,tx,ty,tz,tu,tv'
     struct_format = '<fffBBBxBBBxee'
@@ -90,24 +100,29 @@ class ChunkDataV28(StructObjBase, metaclass=StructObjBaseMeta):
 
 
 class ChunkDataF30(StructObjBase, metaclass=StructObjBaseMeta):
+    id1 = 30
+    id2 = 30
     flags = {FACE}
     fields = 'i0,i1,i2'
     struct_format = '<HHH'
 
 
 class ChunkDataF31(StructObjBase, metaclass=StructObjBaseMeta):
+    id1 = 30
+    id2 = 31
     flags = {FACE}
     fields = 'i0,i1,i2'
     struct_format = '<III'
 
 
 class XMFChunk(StructObjBase, metaclass=StructObjBaseMeta):
-    fields = 'id1,part,offset,one1,id2,packed,qty,bytes,one2'
-    struct_format = b'<IIII4xIIIII'
-    defaults = dict(one1=1, one2=1, part=0)
+    fields = 'id1,part,offset,one1,id2,packed,qty,bytes,one2,extra_data'
+    struct_format = b'<IIII4xIIIII16x132s'
+    defaults = dict(one1=1, one2=1, part=0, extra_data=b'')
     id1 = None
     id2 = None
     bytes = None
+    extra_data = None
 
     def get_chunk_data_class(self):
         if self.id1 == 0 and self.id2 == 2:
@@ -126,7 +141,7 @@ class XMFChunk(StructObjBase, metaclass=StructObjBaseMeta):
             data_class = ChunkDataF31
 
         else:
-            raise XMFException(f'unknown format: id1={self.id1}, id2={self.id2}, bytes={self.bytes}')
+            raise XMFException(f'Unknown chunk format: id1={self.id1}, id2={self.id2}, bytes={self.bytes}')
         return data_class
 
 
