@@ -305,17 +305,17 @@ class XMFReaderUnitTest(TestCase):
         self.reader.write_vertices(obj_file)
 
         obj_file.seek(0)
-        self.assertEqual(
-            obj_file.read(),
-            b'v -1.100 1.200 1.300\n'
-            b'v -2.100 2.200 2.300\n'
-            b'v -3.100 3.200 3.300\n'
-        )
+        self.assertEqual(obj_file.read().split(b'\n'), [
+            b'v -1.100000 1.200000 1.300000',
+            b'v -2.100000 2.200000 2.300000',
+            b'v -3.100000 3.200000 3.300000',
+            b'',
+        ])
 
     def test_write_vertices_v28(self):
         self.reader.flags = {VERTEX, NORMAL, UV}
         self.reader.vertices = [
-            ChunkDataV28(x=1.1+i, y=1.2+i, z=1.3+i, nx=127.5+12.75*i, ny=12.75*i, nz=12.75*i*2, tu=1.7+i, tv=1.8+i)
+            ChunkDataV28(x=1.1+i, y=1.2+i, z=1.3+i, nx=127+i*12.8*2, ny=127+i*12.8, nz=127+i*12.8, tu=1.7+i, tv=1.8+i)
             for i in range(3)
         ]
         obj_file = BytesIO()
@@ -323,19 +323,20 @@ class XMFReaderUnitTest(TestCase):
 
         obj_file.seek(0)
         self.assertEqual(
-            obj_file.read(),
-            b'v -1.100 1.200 1.300\n'
-            b'v -2.100 2.200 2.300\n'
-            b'v -3.100 3.200 3.300\n'
-            b'\n'
-            b'vn 1.000 -1.000 0.000\n'
-            b'vn 0.800 -0.900 0.100\n'
-            b'vn 0.600 -0.800 0.200\n'
-            b'\n'
-            b'vt 1.700 -0.800\n'
-            b'vt 2.700 -1.800\n'
-            b'vt 3.700 -2.800\n'
-        )
+            obj_file.read().split(b'\n'), [
+                b'v -1.100000 1.200000 1.300000',
+                b'v -2.100000 2.200000 2.300000',
+                b'v -3.100000 3.200000 3.300000',
+                b'',
+                b'vn 0.0000000 0.0000000 0.0000000',
+                b'vn -0.1000000 0.1000000 0.2000000',
+                b'vn -0.2000000 0.2000000 0.4000000',
+                b'',
+                b'vt 1.700000 -0.800000',
+                b'vt 2.700000 -1.800000',
+                b'vt 3.700000 -2.800000',
+                b''
+            ])
 
     def test_write_vertices_v28_invalid_uvs(self):
         self.reader.flags = {VERTEX, NORMAL, UV}
@@ -357,13 +358,13 @@ class XMFReaderUnitTest(TestCase):
         self.reader.write_faces(obj_file)
 
         obj_file.seek(0)
-        self.assertEqual(
-            obj_file.read(),
-            b'\n'
-            b'f 11 12 13\n'
-            b'f 21 22 23\n'
-            b'f 31 32 33\n'
-        )
+        self.assertEqual(obj_file.read().split(b'\n'), [
+            b'',
+            b'f 11 12 13',
+            b'f 21 22 23',
+            b'f 31 32 33',
+            b'',
+        ])
 
     def test_write_faces_with_materials(self):
         self.reader.materials = [
@@ -378,21 +379,21 @@ class XMFReaderUnitTest(TestCase):
         self.reader.write_faces(obj_file)
 
         obj_file.seek(0)
-        self.assertEqual(
-            obj_file.read(),
-            b'\n'
-            b'g group0\n'
-            b'usemtl mat1\n'
-            b'f 1/1/1 2/2/2 3/3/3\n'
-            b'f 4/4/4 5/5/5 6/6/6\n'
-            b'f 7/7/7 8/8/8 9/9/9\n'
-            b'\n'
-            b'g group1\n'
-            b'usemtl mat2\n'
-            b'f 10/10/10 11/11/11 12/12/12\n'
-            b'f 13/13/13 14/14/14 15/15/15\n'
-            b'\n'
-        )
+        self.assertEqual(obj_file.read().split(b'\n'), [
+            b'',
+            b'g group0',
+            b'usemtl mat1',
+            b'f 1/1/1 2/2/2 3/3/3',
+            b'f 4/4/4 5/5/5 6/6/6',
+            b'f 7/7/7 8/8/8 9/9/9',
+            b'',
+            b'g group1',
+            b'usemtl mat2',
+            b'f 10/10/10 11/11/11 12/12/12',
+            b'f 13/13/13 14/14/14 15/15/15',
+            b'',
+            b'',
+        ])
 
     @patch('xmf2obj.os')
     @patch('builtins.open')

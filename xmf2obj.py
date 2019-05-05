@@ -157,12 +157,12 @@ class XMFReader(ModUtilMixin):
         uvs = [b'\n']
         bad_uv = False
         for o in self.vertices:
-            vertices.append(f'v {(-o.x):.3f} {o.y:.3f} {o.z:.3f}\n'.encode('ascii'))
+            vertices.append(f'v {(-o.x):.6f} {o.y:.6f} {o.z:.6f}\n'.encode('ascii'))
             if has_normals:
-                normals.append(f'vn {(127.5-o.nz)/127.5:.3f} {(o.ny-127.5)/127.5:.3f} {(o.nx-127.5)/127.5:.3f}\n'
+                normals.append(f'vn {(127-o.nz)/128:.7f} {(o.ny-127)/128:.7f} {(o.nx-127)/128:.7f}\n'
                                .encode('ascii'))
             if has_uvs:
-                uvs.append(f'vt {o.tu:.3f} {1.0-o.tv:.3f}\n'.encode('ascii'))
+                uvs.append(f'vt {o.tu:.6f} {1.0-o.tv:.6f}\n'.encode('ascii'))
                 if abs(o.tu) > 20000:
                     bad_uv = True
         if bad_uv:
@@ -181,7 +181,7 @@ class XMFReader(ModUtilMixin):
             for i, mat in enumerate(self.materials):
                 obj_file.write(f'g group{i}\n'.encode('ascii'))
                 obj_file.write(f'usemtl {mat.name}\n'.encode('ascii'))
-                for f in self.faces[mat.start//3: mat.start+mat.count//3]:
+                for f in self.faces[mat.start//3: mat.start//3+mat.count//3]:
                     obj_file.write(f'f {f.i0+1}/{f.i0+1}/{f.i0+1} '
                                    f'{f.i1+1}/{f.i1+1}/{f.i1+1} '
                                    f'{f.i2+1}/{f.i2+1}/{f.i2+1}\n'.encode('ascii'))
@@ -293,7 +293,7 @@ class XMFReader(ModUtilMixin):
     def __init__(self, xmf_filename, src_path, obj_path, thumb_path, mat_lib_xml=None):
         self.xmf_filename = xmf_filename
         file_dir, file_name = xmf_filename.rsplit('/', 2)[1:]
-        self.file_dir = file_dir[:-5]
+        self.file_dir = file_dir[:-5] if file_dir.endswith('_data') else file_dir
         self.file_name = file_name[:-4]
         self.src_path = src_path
         self.obj_path = obj_path
