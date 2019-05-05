@@ -40,6 +40,7 @@ class XMFReaderUnitTest(TestCase):
         header.file_type = b'XUMF'
         header.version = 3
         header.chunk_offset = 64
+        header.chunk_size = 188
         stream = MagicMock()
         self.assertEqual(self.reader.get_header(stream=stream), header)
 
@@ -49,6 +50,7 @@ class XMFReaderUnitTest(TestCase):
         header.file_type = b'BLAH'
         header.version = 3
         header.chunk_offset = 64
+        header.chunk_size = 188
         stream = MagicMock()
         with self.assertRaises(XMFException):
             self.reader.get_header(stream=stream)
@@ -413,8 +415,7 @@ class XMFReaderUnitTest(TestCase):
         self.reader.write_faces.assert_called_once_with(patch_open.return_value.__enter__.return_value)
 
     @patch('builtins.open')
-    def test_read(self, patch_open):
-        self.reader.get_material_library = MagicMock()
+    def test_read_xmf(self, patch_open):
         self.reader.get_header = MagicMock()
         self.reader.get_chunks = MagicMock()
         self.reader.get_materials = MagicMock()
@@ -425,31 +426,37 @@ class XMFReaderUnitTest(TestCase):
         header = self.reader.get_header.return_value
         chunks = self.reader.get_chunks.return_value
 
-        self.reader.read()
+        self.reader.read_xmf()
 
-        self.assertEqual(self.reader.get_material_library.call_count, 0)
         patch_open.assert_called_once_with(self.reader.xmf_filename, 'rb')
         self.reader.get_header.assert_called_once_with(stream=stream)
         self.reader.get_chunks.assert_called_once_with(stream=stream, header=header)
         self.reader.get_materials.assert_called_once_with(stream=stream, header=header)
         self.reader.read_chunk_data.assert_called_once_with(stream=stream, chunks=chunks)
-        self.reader.write_object_file.assert_called_once_with()
-        self.reader.write_material_file.assert_called_once_with()
 
-    @patch('builtins.open')
-    def test_read_no_mat_lib_xml(self, patch_open):
+    def test_write_obj(self):
         self.reader.mat_lib_xml = None  # test when mat_lib_xml was not passed to init
         self.reader.get_material_library = MagicMock()
-        self.reader.get_header = MagicMock()
-        self.reader.get_chunks = MagicMock()
-        self.reader.get_materials = MagicMock()
-        self.reader.read_chunk_data = MagicMock()
         self.reader.write_object_file = MagicMock()
         self.reader.write_material_file = MagicMock()
 
-        self.reader.read()
+        self.reader.write_obj()
 
         self.reader.get_material_library.assert_called_once_with(src_path=self.reader.src_path)
+        self.reader.write_object_file.assert_called_once_with()
+        self.reader.write_material_file.assert_called_once_with()
+
+    def test_write_obj_no_mat_lib_xml(self):
+        self.reader.get_material_library = MagicMock()
+        self.reader.write_object_file = MagicMock()
+        self.reader.write_material_file = MagicMock()
+
+        self.reader.write_obj()
+
+        self.assertEqual(self.reader.get_material_library.call_count, 0)
+        self.reader.write_object_file.assert_called_once_with()
+        self.reader.write_material_file.assert_called_once_with()
+
 
     @patch('xmf2obj.os')
     @patch('xmf2obj.ImageDraw')
