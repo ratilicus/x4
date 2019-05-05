@@ -102,6 +102,45 @@ updating the macro and component values with the ones in the csv file.
   Note: if you add a ship or ware, it might not be in the Wharf/Shipyard you are docked at, it depends on the
   faction where it's available (this can be controlled in the libraries/wares.xml)
 
+###### XMF2OBJ
+
+Compiles Wavefront obj into xmf, so you can create or modify ship/etc models and put them into the game
+Here is an example of how rat mod pegasus ship could be modified
+
+Requirements:
+- python3.7 installed (3.6 should work also)
+- virtual env with all the stuff in requirements.txt
+- all the files extracted from the game cabs into src dir 
+  - game dir setup in config.py, (`./setup.sh`)
+  - extracted all the game files (`python3.7 extract_x4.py --extract --all`)
+
+Steps:
+- get the paranid scout model using xmf2obj.py, `python3.7 xmf2obj.py src/assets/units/size_s/ship_par_s_scout_01_data/anim_main-lod0.xmf`
+- import the `objs/ship_par_s_scout_01/anim_main-lod0.obj`, which the above step should have created, in Blender using File -> Import -> Wavefront (.obj)
+  - Import OBJ settings: Use Keep Vert Order and Poly Groups
+- modify the model (try not to mess with materials, the material names is how the game maps textures to materials)
+  - do not modify the materials (the material names are how the game knows which textures to use)
+  - try not to modify the shape of around where the cockpit/other decals are, otherwise the cockpit/other decals won't fit right
+  - if you add new faces, etc. make sure you calculate the normals and texture coordinates right (it's easiest to deform or extrude faces so they preserve those values) 
+- export the model using Blender File -> Export -> Wavefront (.obj) to same path as before (ex. `objs/ship_par_s_scout_01/anim_main-lod0-mod.obj`)
+  - Export OBJ settings: Write Normals, Include UVs, Write Materials, Triangulate Faces
+- convert the obj back to xmf using obj2xmf, eg `python3.7 obj2xmf.py objs/ship_par_s_scout_01/anim_main-lod0-mod.obj`
+- create the data dir in mod dir `mods/rat/mod/ships/ship_pegasus_data`
+- copy the other xmf files from the original model, copy all the files in`src/assets/units/size_s/ship_par_s_scout_01_data/` except the `*-lod?.xmf` files to `mods/rat/mod/ships/ship_pegasus_data/`
+  - all the other files are decals and cockpit, etc
+  - the anim_main-lod*.xmf or part_main-lod*.xmf files are the actual ship models for the different levels of detail (we don't want to copy these since we are overriding them)
+- update the pegasus component xml to point to the new data dir, update `mods/rat/mod/ships/ship_pegasus.xml`, change the `<source geometry="assets\units\size_s\ship_par_s_scout_01_data" />`
+  value to `<source geometry="extensions/rat/mod/ships/ship_pegasus_data" />`
+- pack the mod into cabs and place them into your game dir using pack_mod, `python3.7 pack_mod.py rat` this should compile all the files in `mods/rat` into cab/dat and put them in your `{game dir}/extensions/rat`
+- at this point the mod files are in the extensions dir, so you should be able to run the game and buy your new Pegasus X ship
+
+Note: 
+- In this example we only modified the lod0 file, that means it's not optimal, lods/levels of detail use progressively less complex meshes the further the ship is away for performance reasons.
+having just lod0 means it uses just 1 level of detail for all distances.  To make a proper ship you would have to make your ship in all the different levels of detail with less vertices/faces in each higher lod#
+- In this example we did not modify the `anim_main-collision.xmf`, which is a simplified mesh w/o materials that is used for physics collisions, in order for the collision shape to reflect our new shape
+changes, we would have to do the same changes in blender to the collision mesh as we did to the lod mesh.  So, at the moment the ship might look right, but if your ship collides with anything it will
+physically react based on the original ship shape.
+
 
 ###### Current Features
 
@@ -114,6 +153,7 @@ updating the macro and component values with the ones in the csv file.
     - adding shields
 - xmf2obj.py script to extract Wavefront obj (can be imported in Blender)
     - also this generates thumbnails
+- (experimental) obj2xmf.py script to compile a xmf file from a Wavefront obj
 
 ###### Roadmap
 
