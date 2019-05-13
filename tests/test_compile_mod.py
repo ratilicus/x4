@@ -14,7 +14,7 @@ from compile_mod import X4ModCompiler, MAPPINGS
 class ModCompilerUnitTest(TestCase):
 
     def setUp(self) -> None:
-        self.compiler = X4ModCompiler(name='test-mod', config=None)
+        self.compiler = X4ModCompiler(mod_name='test-mod', config=None)
         self.compiler.mod_path = 'path/to/test-mod'
         self.compiler.src_path = 'path/to/src'
         self.compiler.src_macros = MagicMock()
@@ -424,7 +424,7 @@ class ModCompilerUnitTest(TestCase):
         mod_name = 'my-mod-name'
         config = MagicMock(MODS='path/to/mods')
         mod_path = config.MODS + '/' + mod_name
-        compiler = X4ModCompiler(name=mod_name, config=config)
+        compiler = X4ModCompiler(mod_name=mod_name, config=config)
         patch_get_macros.assert_called_once_with(src_path=config.SRC)
         patch_get_components.assert_called_once_with(src_path=config.SRC)
         patch_get_wares.assert_has_calls([
