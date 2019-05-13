@@ -28,6 +28,3 @@ if __name__ == '__main__':
         logger.info("%s <mod_name>", sys.argv[0])
     else:
         pack_mod(mod_name=args[0], config=get_config())
-
-
-
