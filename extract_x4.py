@@ -131,7 +131,7 @@ class CatParser(object):
                     if self.is_script_file(filename):
                         out_file_path = '{}/{}'.format(self.out_path, filename)
                         self.extract_file(dat_file, out_file_path, offset, size)
-                        logger.info('%60s (%10d)', cat_filename, out_file_path)
+                        logger.info('%60s | %10s', cat_filename, out_file_path)
                 else:
                     if not self.signatures and self.is_sig_file(filename):
                         continue

@@ -239,8 +239,8 @@ class X4ModCompiler(ModUtilMixin):
         for filename in sorted(glob.glob(self.mod_path+'/*.csv')):
             self.read_csv(filename, self.csv_data)
 
-    def __init__(self, name, config):
-        self.mod_name = name
+    def __init__(self, mod_name, config):
+        self.mod_name = mod_name
         self.mod_macros = []
         self.mod_components = []
         self.mod_ts = {}
