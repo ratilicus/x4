@@ -5,9 +5,8 @@ Use: ./run_tests.sh
 
 from io import BytesIO
 from unittest import TestCase
-from unittest.mock import patch, call, MagicMock
 
-from xmflib import StructException, StructObjBaseMeta, StructObjBase, XMFHeader, XMFChunk, XMFMaterial, XMFException,\
+from lib.xmflib import StructException, StructObjBaseMeta, StructObjBase, XMFHeader, XMFChunk, XMFMaterial, XMFException,\
     ChunkDataV2, ChunkDataV32, ChunkDataV28, ChunkDataF30, ChunkDataF31
 
 

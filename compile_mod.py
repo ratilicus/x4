@@ -9,7 +9,7 @@ import sys
 import logging
 import glob
 import xml.etree.ElementTree as ET
-from constants import MAPPINGS, T_LIST
+from lib.constants import MAPPINGS, T_LIST
 from lib.x4lib import get_config, require_python_version, ModUtilMixin
 
 require_python_version(3, 5)
