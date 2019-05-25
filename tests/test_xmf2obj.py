@@ -2,11 +2,10 @@
 Run tests
 Use: ./run_tests.sh
 """
-import struct
 from io import BytesIO
 from unittest import TestCase
 from unittest.mock import patch, call, MagicMock
-from xmflib import ChunkDataV2, ChunkDataV28, ChunkDataF31, VERTEX, NORMAL, UV
+from lib.xmflib import ChunkDataV2, ChunkDataV28, ChunkDataF31, VERTEX, NORMAL, UV
 from xmf2obj import XMFException, XMFChunk, XMFMaterial, XMFReader
 
 
