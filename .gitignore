@@ -5,6 +5,7 @@ thumbs*
 env
 venv
 game
+db
 .idea
 .coverage
 config.py
