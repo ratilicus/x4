@@ -10,7 +10,7 @@ import logging
 import glob
 import xml.etree.ElementTree as ET
 from constants import MAPPINGS, T_LIST
-from x4lib import get_config, require_python_version, ModUtilMixin
+from lib.x4lib import get_config, require_python_version, ModUtilMixin
 
 require_python_version(3, 5)
 logger = logging.getLogger('x4.' + __name__)

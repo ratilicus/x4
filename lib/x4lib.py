@@ -59,7 +59,9 @@ class ModUtilMixin(object):
         except Exception:
             logger.error('set_xml: {}, {}'.format(value_template, row), exc_info=True)
             exit(0)
-        el.set(key, value)
+        if value != '':
+            # skip on blank value
+            el.set(key, value)
         return True
 
     @classmethod
@@ -82,6 +84,10 @@ class ModUtilMixin(object):
         return cls.read_xml(src_path + '/libraries/wares.xml', allow_fail=allow_fail)
 
     @classmethod
+    def get_ts(cls, src_path, allow_fail=False, language=44):
+        return cls.read_xml(src_path + '/t/0001-L{:03d}.xml'.format(language), allow_fail=allow_fail)
+
+    @classmethod
     def read_csv(cls, filename: str, csv_data: dict):
         reader_rows = csv.reader(open(filename))
         header = None
@@ -95,4 +101,18 @@ class ModUtilMixin(object):
             elif col0 == 'd':
                 rows.append({h: d for h, d in zip(header, row[1:])})
 
+    @classmethod
+    def pat_replace(cls, text, pat, repl_fn):
+        out = []
+        matches = pat.finditer(text)
+        start = 0
+        for m in matches:
+            out.extend([
+                text[start:m.start()],
+                repl_fn(*m.groups()),
+            ])
+            start = m.end()
+        out.append(text[start:])
+        had_replacements = start > 0
+        return u''.join(out), had_replacements
 

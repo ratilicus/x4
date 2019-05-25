@@ -9,7 +9,7 @@ import os
 import sys
 import os.path
 import logging
-from x4lib import get_config, require_python_version
+from lib.x4lib import get_config, require_python_version
 
 require_python_version(3, 5)
 logger = logging.getLogger('x4.' + __name__)

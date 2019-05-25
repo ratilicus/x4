@@ -3,22 +3,21 @@ Run tests
 Use: ./run_tests.sh
 """
 
-from io import BytesIO
 from unittest import TestCase
 from unittest.mock import patch, call, MagicMock
 
-from x4lib import require_python_version, get_config, ModUtilMixin
+from lib.x4lib import require_python_version, get_config, ModUtilMixin
 
 
 class X4LibUnitTest(TestCase):
 
-    @patch('x4lib.sys')
+    @patch('lib.x4lib.sys')
     def test_require_python_version(self, patch_sys):
         patch_sys.version_info.major = 3
         patch_sys.version_info.minor = 4
         require_python_version(3, 3)
 
-    @patch('x4lib.sys')
+    @patch('lib.x4lib.sys')
     def test_require_python_version_bad(self, patch_sys):
         patch_sys.version_info.major = 3
         patch_sys.version_info.major = 2
@@ -42,19 +41,19 @@ class X4LibUnitTest(TestCase):
 
 class ModUtilMixinUnitTest(TestCase):
 
-    @patch('x4lib.deepcopy')
+    @patch('lib.x4lib.deepcopy')
     def test_clone(self, patch_deepcopy):
         xml = MagicMock()
         self.assertEqual(ModUtilMixin.clone(xml), patch_deepcopy.return_value)
         patch_deepcopy.assert_called_once_with(xml)
 
-    @patch('x4lib.ElementTree')
+    @patch('lib.x4lib.ElementTree')
     def test_read_xml(self, patch_ET):
         filepath = 'file-path'
         self.assertEqual(ModUtilMixin.read_xml(filepath=filepath), patch_ET.parse.return_value)
         patch_ET.parse.assert_called_once_with(filepath)
 
-    @patch('x4lib.ElementTree')
+    @patch('lib.x4lib.ElementTree')
     def test_read_xml_raises_error(self, patch_ET):
         patch_ET.parse.side_effect = Exception
         filepath = 'file-path'
@@ -62,14 +61,14 @@ class ModUtilMixinUnitTest(TestCase):
             ModUtilMixin.read_xml(filepath=filepath)
         patch_ET.parse.assert_called_once_with(filepath)
 
-    @patch('x4lib.ElementTree')
-    def test_read_xml_allow_faii(self, patch_ET):
+    @patch('lib.x4lib.ElementTree')
+    def test_read_xml_allow_fail(self, patch_ET):
         patch_ET.parse.side_effect = Exception
         filepath = 'file-path'
         self.assertEqual(ModUtilMixin.read_xml(filepath=filepath, allow_fail=True), None)
         patch_ET.parse.assert_called_once_with(filepath)
 
-    @patch('x4lib.ModUtilMixin.read_xml')
+    @patch('lib.x4lib.ModUtilMixin.read_xml')
     def test_get_macros(self, patch_read_xml):
         patch_read_xml.return_value.findall.return_value = [
             {'name': 'macro1', 'value': 'path\\to\\macro1.xml'},
@@ -83,7 +82,7 @@ class ModUtilMixinUnitTest(TestCase):
         patch_read_xml.assert_called_once_with(src_path+'/index/macros.xml')
         patch_read_xml.return_value.findall.assert_called_once_with('./entry')
 
-    @patch('x4lib.ModUtilMixin.read_xml')
+    @patch('lib.x4lib.ModUtilMixin.read_xml')
     def test_get_components(self, patch_read_xml):
         patch_read_xml.return_value.findall.return_value = [
             {'name': 'component1', 'value': 'path\\to\\component1.xml'},
@@ -97,20 +96,20 @@ class ModUtilMixinUnitTest(TestCase):
         patch_read_xml.assert_called_once_with(src_path+'/index/components.xml')
         patch_read_xml.return_value.findall.assert_called_once_with('./entry')
 
-    @patch('x4lib.ModUtilMixin.read_xml')
+    @patch('lib.x4lib.ModUtilMixin.read_xml')
     def test_get_wares(self, patch_read_xml):
         src_path = 'src-path'
         self.assertEqual(ModUtilMixin.get_wares(src_path=src_path), patch_read_xml.return_value)
         patch_read_xml.assert_called_once_with(src_path+'/libraries/wares.xml', allow_fail=False)
 
-    @patch('x4lib.ModUtilMixin.read_xml')
+    @patch('lib.x4lib.ModUtilMixin.read_xml')
     def test_get_wares_allow_fail(self, patch_read_xml):
         src_path = 'src-path'
         self.assertEqual(ModUtilMixin.get_wares(src_path=src_path, allow_fail=True), patch_read_xml.return_value)
         patch_read_xml.assert_called_once_with(src_path+'/libraries/wares.xml', allow_fail=True)
 
     @patch('builtins.open')
-    @patch('x4lib.csv')
+    @patch('lib.x4lib.csv')
     def test_read_csv(self, patch_csv, patch_open):
         patch_csv.reader.return_value = [
             ('H component-1', 'f1', 'f2', 'f3'),
@@ -141,7 +140,7 @@ class ModUtilMixinUnitTest(TestCase):
         patch_open.assert_called_once_with(filename)
 
     @patch('builtins.open')
-    @patch('x4lib.os')
+    @patch('lib.x4lib.os')
     def test_write_xml(self, patch_os, patch_open):
         filename = 'path/to/filename'
         xml = MagicMock()
@@ -166,7 +165,7 @@ class ModUtilMixinUnitTest(TestCase):
         xml.find.return_value.set.assert_called_once_with(key, value_template.format.return_value)
         value_template.format.assert_called_once_with(**row)
 
-    @patch('x4lib.ElementTree')
+    @patch('lib.x4lib.ElementTree')
     def test_set_xml_find_fail(self, patch_ET):
         xml = MagicMock()
         xml.find.return_value = None
@@ -194,7 +193,7 @@ class ModUtilMixinUnitTest(TestCase):
         xml.find.assert_called_once_with(path)
         value_template.format.assert_called_once_with(**row)
 
-    @patch('x4lib.ModUtilMixin.set_xml')
+    @patch('lib.x4lib.ModUtilMixin.set_xml')
     def test_update_xml(self, patch_set_xml):
         xml = MagicMock()
         row = MagicMock()

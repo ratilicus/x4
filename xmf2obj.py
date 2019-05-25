@@ -19,7 +19,7 @@ import zlib
 import glob
 from io import BytesIO
 from PIL import Image, ImageDraw
-from x4lib import get_config, require_python_version, ModUtilMixin
+from lib.x4lib import get_config, require_python_version, ModUtilMixin
 from xmflib import XMFException, XMFHeader, XMFChunk, XMFMaterial, VERTEX, NORMAL, UV
 
 require_python_version(3, 6)

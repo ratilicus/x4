@@ -3,12 +3,12 @@
 import logging
 import argparse
 import glob
-from x4lib import get_config, require_python_version
+from lib.x4lib import get_config, require_python_version
 from extract_x4 import CatParser
 from compile_mod import X4ModCompiler
 from pack_mod import pack_mod
 
-require_python_version(3, 5)
+require_python_version(3, 7)
 logger = logging.getLogger('x4.' + __name__)
 
 VERBOSITY = {1: logging.WARNING, 2: logging.INFO, 3: logging.DEBUG}

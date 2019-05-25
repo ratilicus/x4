@@ -7,7 +7,7 @@ Use: python3 pack_mod.py {mod name}
 
 import sys
 import logging
-from x4lib import get_config, require_python_version
+from lib.x4lib import get_config, require_python_version
 from pack_x4 import pack_path
 
 require_python_version(3, 5)
