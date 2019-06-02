@@ -14,7 +14,7 @@ replace the key values from the csv without losing any of the other changes
 - pack_mod.py: pack your MOD dir files into cat/dat and place them inside your X4/extensions dir, so you can test
   them right away in your game  
 - xmf2obj.py: extracting model data and textures and writing obj files that can be opened in Blender, etc
-
+- search.py: index Ts/labels, and Wares, and search wares to find macros/components
 
 ###### Finding Macros
 
@@ -27,6 +27,18 @@ When you extract the scripts with `python3 extract_x4.py --extract` the `src` di
 - weapon macros are in `./src/assets/props/WeaponSystems/*/macros/*_macros.xml`
 
 The `base_macro` in the csv files should reference the macro name (eg. <macro name="`ship_*_macro`" ...>)
+
+
+###### Searching
+
+After extracting `python3 extract_x4.py --extract`
+- Index ware entries (one time only) using `python3.7 search.py -i`  
+  (This should index all the entries in `libraries/wares.xml`)
+- `python3.7 search.py <search string>`
+   (eg. `python3.7 search.py Pegasus` or `python3.7 search.py factions:paranid AND tags:ship`) 
+- for ship results `component` is the macro name
+
+Note: work in progress
 
 
 ###### How to mod
