@@ -85,7 +85,7 @@ class ModUtilMixin(object):
 
     @classmethod
     def get_ts(cls, src_path, allow_fail=False, language=44):
-        return cls.read_xml(src_path + '/t/0001-L{:03d}.xml'.format(language), allow_fail=allow_fail)
+        return cls.read_xml(src_path + '/t/0001-l{:03d}.xml'.format(language), allow_fail=allow_fail)
 
     @classmethod
     def read_csv(cls, filename: str, csv_data: dict):

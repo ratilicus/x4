@@ -1,2 +1,4 @@
 codecov>=2.0
 Pillow>=6.0.0
+Whoosh>=2.7.4
+tqdm>=4
