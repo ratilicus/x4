@@ -77,7 +77,7 @@ updating the macro and component values with the ones in the csv file.
 ###### Modding Steps
 
 - Step 1: Create config.py
-  run `./setup.sh`
+  run `./setup.py` or `python3.7 setup.py`
   (this should create a config.py with paths for present dir, game dir, src dir, mods dir)
 
 - Step 2: extract X4 scripts
@@ -117,7 +117,7 @@ updating the macro and component values with the ones in the csv file.
 
 ###### Current Features
 
-- auto path configuration via setup.sh
+- auto path configuration via `./setup.py` or `python3.7 setup.py`
 - extracting scripts and/or all files from game files via extract_x4.py
 - packing mod files into cat/dat via pack_x4.py or pack_mod.py
 - compiling mod from csv files via compile_mod.py
@@ -135,7 +135,7 @@ updating the macro and component values with the ones in the csv file.
 - add proper logging (partially implemented)
 - add complete unit test set (full coverage on main scripts already implemented)
 - test setting up and using these mod scripts in Windows 10 
-  (in Win 10 ubuntu integration, scripts should work if setup correctly, setup.sh will probably not be able to find X4 dir as is)
+  (in Win 10 ubuntu integration, scripts should work if setup correctly, setup.py will probably not be able to find X4 dir as is)
 - add integration tests
 - add exporting of models (currently experimental xmf2obj.py)
 - add importing of models 
@@ -162,8 +162,8 @@ Written and tested in the following environment
 
 - clone this repo
 - if you have ubuntu 16+ you should already have python3.5 installed
-- in a terminal in the repo dir run: `./setup.sh` which will try to auto detect your X4 game dir and create config.py
-- (optional) if ./setup.sh doesn't work, use `config.py.sample` to create your own `config.py` (adjust paths as necessary)
+- in a terminal in the repo dir run: `./setup.py` which will try to auto detect your X4 game dir and create config.py
+- (optional) if `./setup.py` doesn't work, use `config.py.sample` to create your own `config.py` (adjust paths as necessary)
 - after this you should be able to run `python3 extract_x4.py --extract` to exract the game scripts for most modding
 - (optional) to extract all content, run `python3 extract_x4.py --extract --all` (this is necessary for xmf2obj.py)
 - (optional) if you plan on using xmf2obj.py script you will need to upgrade your python3 to 3.6+
