@@ -264,5 +264,5 @@ if __name__ == '__main__':
     if len(args) < 1:
         logger.info("%s <mod_name>", sys.argv[0])
     else:
-        compiler = X4ModCompiler(name=args[0], config=get_config())
+        compiler = X4ModCompiler(mod_name=args[0], config=get_config())
         compiler.compile()
