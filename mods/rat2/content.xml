@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<content id="ratilicus_002" name="L+ Engine Mod and Scout Mod" author="rat" version="1" date="2022-02-24" save="0" lastupdate="1645689141">
+Enhances booster duration for L and XL engines to mitigate AI buring out their shields.
+Enhances charge time and travel specs for L and XL engines to lower delays in travel, and make other races more competitive with the Terrans.
+Increased differences between all-round and travel engines.
+
+Also limits scout ships to mk1 weapons and shields
+</content>

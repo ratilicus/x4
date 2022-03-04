@@ -1,3 +1,0 @@
-H bullet,id,base_macro,speed,lifetime,heat,reload,damage,shield,repair,red,green,blue
-D,ire,bullet_gen_s_laser_01_mk1_macro,4147,0.75,25,14,26,,0,255,0,0
-D,pac,bullet_gen_s_laser_01_mk1_macro,2500,1.5,50,14,50,30,0,0,255,0

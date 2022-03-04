@@ -1,0 +1,111 @@
+# increase boost duration, especially for travel engines so stupid AI doesn't burn through them as easily
+# increase performance of engines for large ships:
+# increased boost speed for L/XL so boost is now more useful and so AI hopefully has a chance to get away from an attack and not get stuck boosting endlessly
+# decreased boost speed for M/S to balance increasing boost time
+# increased travel performance to make other races more competitive with Terrans
+
+
+
+# X Large ships
+macros/engine_*_xl_allround_*_macro.xml:
+    macro/properties:
+        boost@duration: "*8"
+        boost@thrust: "*1.5"
+        travel@charge: "*0.7"
+        travel@attack: "/2"
+        travel@release: "/3"
+        thrust@strafe: "=60"
+        thrust@pitch: "=60"
+        thrust@yaw: "=60"
+        hull@max: "*4"
+
+macros/engine_*_xl_travel_*_macro.xml:
+    macro/properties:
+        boost@duration: "*8"
+        boost@thrust: "*1.25"
+        travel@charge: "*0.6"
+        travel@attack: "/2"
+        travel@release: "/3"
+        hull@max: "*4"
+
+# Large ships
+macros/engine_*_l_allround_*_macro.xml:
+    macro/properties:
+        boost@duration: "*5"
+        boost@thrust: "*2"
+        travel@charge: "*0.5"
+        travel@attack: "/2"
+        travel@release: "/3"
+        thrust@strafe: "=40"
+        thrust@pitch: "=40"
+        thrust@yaw: "=40"
+        hull@max: "*4"
+
+macros/engine_*_l_travel_*_macro.xml:
+    macro/properties:
+        boost@duration: "*5"
+        boost@thrust: "*1.5"
+        travel@charge: "*0.6"
+        travel@attack: "/2"
+        travel@release: "/3"
+        hull@max: "*4"
+
+
+# Medium ships
+macros/engine_*_m_combat_*_macro.xml:
+    macro/properties:
+        boost@duration: "*2"
+        boost@thrust: "*.75"
+        travel@attack: "/2"
+        travel@release: "/3"
+        thrust@strafe: "=40"
+        thrust@pitch: "=40"
+        thrust@yaw: "=40"
+
+macros/engine_*_m_allround_*_macro.xml:
+    macro/properties:
+        boost@duration: "*3"
+        boost@thrust: "/2"
+        travel@attack: "/2"
+        travel@release: "/3"
+        thrust@strafe: "=20"
+        thrust@pitch: "=20"
+        thrust@yaw: "=20"
+
+macros/engine_*_m_travel_*_macro.xml:
+    macro/properties:
+        boost@duration: "*5"
+        boost@thrust: "/2"
+        travel@attack: "/2"
+        travel@release: "/3"
+
+# Small ships
+macros/engine_*_s_combat_*_macro.xml:
+    macro/properties:
+        boost@duration: "*2"
+        boost@thrust: "*.75"
+        travel@attack: "/2"
+        travel@release: "/3"
+        thrust@strafe: "=20"
+        thrust@pitch: "=20"
+        thrust@yaw: "=20"
+
+macros/engine_*_s_allround_*_macro.xml:
+    macro/properties:
+        boost@duration: "*3"
+        boost@thrust: "/2"
+        travel@attack: "/2"
+        travel@release: "/3"
+        thrust@strafe: "=10"
+        thrust@pitch: "=10"
+        thrust@yaw: "=10"
+
+macros/engine_*_s_travel_*_macro.xml:
+    macro/properties:
+        boost@duration: "*4"
+        boost@thrust: "/2"
+        travel@attack: "/2"
+        travel@release: "/3"
+
+
+

@@ -140,24 +140,26 @@ class CatParser(object):
                     logger.info('\t%s', out_file_path)
 
 
-def extract_x4(config, extract, scripts_only, signatures=False):
+def extract_x4(cat_path, out_path, extract, scripts_only, signatures=False):
     """
     Extract all x4 cat files
-    :param config: config from x4lib.get_config
+    :param cat_path: path to game .cat/.dat files
+    :param out_path: path to extract the files inside the .cat/.dat files
     :param extract: (bool) extract if True else list (bool)
     :param scripts_only: (bool) extract only script files if True else all files
     :param signatures: (bool) extract signature files if True (default False)
     :return: None
     """
-    cats = sorted(f for f in os.listdir(config.X4) if f.endswith('.cat'))
+    
+    cats = sorted(f for f in os.listdir(cat_path) if f.endswith('.cat'))
     parser = CatParser(
-        out_path=config.SRC,
+        out_path=out_path,
         scripts_only=scripts_only,
         signatures=signatures,
     )
     method = parser.extract if extract else parser.list
     for f in cats:
-        method(cat_filename='{}/{}'.format(config.X4, f))
+        method(cat_filename='{}/{}'.format(cat_path, f))
 
 
 if __name__ == '__main__':
@@ -170,9 +172,22 @@ if __name__ == '__main__':
         exit(0)
 
     if args & {'--extract', '--list'}:
-        extract_x4(extract='--extract' in args,
-                   scripts_only='--all' not in args,
-                   config=get_config())
+        config=get_config()
+        extract_x4(
+            extract='--extract' in args,
+            scripts_only='--all' not in args,
+            cat_path=config.X4,
+            out_path=f'{config.SRC}/base',
+        )
+        dlcs = (f for f in os.listdir(f'{config.X4}/extensions') if f.startswith('ego_dlc_'))
+        for dlc in dlcs:
+            extract_x4(
+                extract='--extract' in args,
+                scripts_only='--all' not in args,
+                cat_path=f'{config.X4}/extensions/{dlc}',
+                out_path=f'{config.SRC}/{dlc}',
+            )
+        
 
     else:
         config = get_config()

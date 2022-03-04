@@ -1,0 +1,245 @@
+# limit scouts to mk1 weapons and shields
+
+shield_*_s_standard_*_mk2.xml:
+    component/connections/connection@tags: 
+        - :?shield +mk2
+
+    
+shield_*_s_standard_*_mk3.xml:
+    component/connections/connection@tags: 
+        - :?shield +mk3
+
+
+weapon_*_s_*_mk2.xml:
+    component/connections/connection@tags: 
+        - :?weapon +mk2
+
+
+# add some weapons and extra shields to fighters
+size_s/ship_*_s_fighter_*.xml:
+    component/connections/connection@tags: 
+        - :?shield +mk2 +mk3
+        - :?weapon +mk2
+
+    component/connections>>:
+        - <connection name="con_xta_weapon_01" tags="weapon small standard"><offset><position *COCKPIT-LEFT*/></offset></connection>
+        - <connection name="con_xta_weapon_02" tags="weapon small standard"><offset><position *COCKPIT-RIGHT*/></offset></connection>
+        - <connection name="con_xtra_shield_01" tags="small shield unhittable"><offset><position x="0" y="1.5" z="-4"/></offset></connection>
+
+
+size_s/ship_*_s_heavyfighter_*.xml:
+    component/connections/connection@tags: 
+        - :?shield +mk2 +mk3
+        - :?weapon +mk2
+
+    component/connections>>:
+        - <connection name="con_xta_weapon_01" tags="weapon small standard"><offset><position *COCKPIT-LEFT*/></offset></connection>
+        - <connection name="con_xta_weapon_02" tags="weapon small standard"><offset><position *COCKPIT-RIGHT*/></offset></connection>
+        - <connection name="con_xtra_shield_01" tags="small shield unhittable"><offset><position x="0.5" y="1.5" z="-4"/></offset></connection>
+        - <connection name="con_xtra_shield_02" tags="small shield unhittable"><offset><position x="-0.5" y="1.5" z="-4"/></offset></connection>
+
+
+
+# add extra shields to larger combat ships
+size_m/ship_*_m_corvette_*.xml:
+    component/connections>>:
+        - <connection name="con_xtra_shield_01" tags="medium shield unhittable"><offset><position x="0" y="0" z="0"/></offset></connection>
+
+
+size_m/ship_*_m_gunboat_*.xml:
+    component/connections>>:
+        - <connection name="con_xtra_shield_01" tags="medium shield unhittable"><offset><position x="0" y="0" z="0"/></offset></connection>
+
+
+size_m/ship_*_m_bomber_*.xml:
+    component/connections>>:
+        - <connection name="con_xtra_shield_01" tags="medium shield unhittable"><offset><position x="0" y="0" z="0"/></offset></connection>
+
+
+size_m/ship_*_m_frigate_*.xml:
+    component/connections>>:
+        - <connection name="con_xtra_shield_01" tags="medium shield unhittable"><offset><position x="-1" y="0" z="0"/></offset></connection>
+        - <connection name="con_xtra_shield_02" tags="medium shield unhittable"><offset><position x="2" y="0" z="0"/></offset></connection>
+
+
+size_l/ship_*_l_destroyer_*.xml:
+    component/connections>>:
+        - <connection name="con_xtra_shield_01" tags="large shield unhittable"><offset><position x="-1" y="0" z="0"/></offset></connection>
+        - <connection name="con_xtra_shield_02" tags="large shield unhittable"><offset><position x="+2" y="0" z="0"/></offset></connection>
+
+
+#make scouts faster
+macros/ship_*_s_scout_*_macro.xml:
+    macro/properties:
+        drag@forward: "/1.5"
+
+
+# make scout/mk1 bullets faster, but shorter range, lower damage, more heat
+macros/bullet_*_s_*_mk1_macro.xml:
+    macro/properties:
+        bullet@speed: "*1.2"
+        bullet@lifetime: "*0.7"
+        damage@value: "*0.9"
+        heat@value: "*1.5"
+
+
+# make scout/mk1 shields fast charge, but low max
+macros/shield_*_s_*_mk1_macro.xml:
+    macro/properties:
+        recharge@max: "/2"
+        recharge@rate: "*2"
+        recharge@delay: "/4"
+
+
+# decrease fighter shields recharge delay
+macros/shield_*_s_*_mk2_macro.xml:
+    macro/properties:
+        recharge@delay: "/2.5"
+
+
+macros/shield_*_s_*_mk3_macro.xml:
+    macro/properties:
+        recharge@delay: "/2"
+
+
+# increase shield specs of larger ships, to be more in line with X3 specs
+macros/shield_*_m_*_macro.xml:
+    macro/properties:
+        recharge@max: "*2"
+        recharge@rate: "*1.75"
+        hull@max: "*4"
+
+
+macros/shield_*_l_*_macro.xml:
+    macro/properties:
+        recharge@max: "*1.5"
+        hull@max: "*4"
+
+
+macros/shield_*_xl_*_macro.xml:
+    macro/properties:
+        recharge@max: "*1.2"
+        hull@max: "*4"
+
+
+# make destroyer ship weapons more powerful (to compete with Xenon Turrets)
+macros/bullet_[aps]??_l_laser_*_macro.xml:
+    macro/properties:
+        reload@time: "/1.5"
+        heat@value: "/1.5"
+
+
+# make destroyer ship weapons more powerful (to compete with Xenon Turrets)
+macros/bullet_[aps]??_l_laser_*_macro.xml:
+    macro/properties:
+        reload@time: "/1.5"
+        heat@value: "/1.5"
+
+
+# teladi destroyer ship weapons need even more boost
+macros/bullet_tel_l_laser_*_macro.xml:
+    macro/properties:
+        reload@time: "/2.5"
+        heat@value: "/2.5"
+
+
+# make medium turrets faster but lower range and damage (should increase hit rate at the cost of damage amount)
+macros/turret_*_m_*_macro.xml:
+    macro/properties:
+        rotationspeed@max: "*2"
+
+
+macros/bullet_*_turret_m_beam_*_macro.xml:
+    macro/properties:
+        reload@time: "*0.25"
+        reload@rate: "/0.25"
+        damage@value: "*0.5"
+
+
+macros/bullet_*_turret_m_laser_*_macro.xml:
+    macro/properties:
+        bullet@speed: "*2"
+        bullet@lifetime: "/2"
+        reload@time: "*0.25"
+        reload@rate: "/0.25"
+        damage@value: "*0.5"
+
+
+macros/bullet_*_turret_m_gatling_*_macro.xml:
+    macro/properties:
+        bullet@speed: "*2"
+        bullet@lifetime: "/2"
+        reload@time: "*0.5"
+        reload@rate: "/0.5"
+        damage@value: "*0.75"
+
+macros/bullet_*_turret_m_shotgun_*_macro.xml:
+    macro/properties:
+        bullet@speed: "*2"
+        bullet@lifetime: "/2"
+        reload@time: "*0.75"
+        reload@rate: "/0.75"
+
+macros/bullet_*_turret_m_plasma_*_macro.xml:
+    macro/properties:
+        bullet@speed: "*1.5"
+        bullet@lifetime: "/1.5"
+        reload@time: "*0.5"
+        reload@rate: "/0.5"
+        damage@value: "*0.75"
+
+macros/bullet_gen_m_flak_*_macro.xml:
+    macro/properties:
+        bullet@speed: "*2"
+        bullet@lifetime: "/2"
+        reload@time: "*0.75"
+        reload@rate: "/0.75"
+
+
+
+macros/turret_*_l_*_macro.xml:
+    macro/properties:
+        rotationspeed@max: "*2"
+
+
+macros/bullet_*_turret_m_beam_*_macro.xml:
+    macro/properties:
+        reload@time: "*0.5"
+        reload@rate: "/0.5"
+        damage@value: "*0.6"
+
+
+macros/bullet_[atsp]??_turret_m_laser_*_macro.xml:
+    macro/properties:
+        bullet@speed: "*1.5"
+        bullet@lifetime: "/1.5"
+        reload@time: "*0.5"
+        reload@rate: "/0.5"
+        damage@value: "*0.75"
+
+
+macros/bullet_*_turret_l_gatling_*_macro.xml:
+    macro/properties:
+        bullet@speed: "*1.5"
+        bullet@lifetime: "/1.5"
+        reload@time: "*0.5"
+        reload@rate: "/0.5"
+        damage@value: "*0.75"
+
+macros/bullet_*_turret_l_shotgun_*_macro.xml:
+    macro/properties:
+        bullet@speed: "*1.5"
+        bullet@lifetime: "/1.5"
+        reload@time: "*0.65"
+        reload@rate: "/0.65"
+        damage@value: "*0.75"
+
+macros/bullet_*_turret_l_plasma_*_macro.xml:
+    macro/properties:
+        bullet@speed: "*1.25"
+        bullet@lifetime: "/1.25"
+        reload@time: "*0.5"
+        reload@rate: "/0.5"
+        damage@value: "*0.75"
+
+

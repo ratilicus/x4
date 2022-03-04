@@ -1,6 +1,0 @@
-H shield,id,base_macro,tags,recharge_max,recharge_rate,recharge_delay,name,basename,shortname,description,mk,price_min,price_avg,price_max,restriction,factions
-D,sh1mj,shield_par_s_standard_01_mk1_macro,small shield 1mj component unhittable,100,200,2.1,1MJ Shield,1MJ Shield,1MJ,1MJ Shield for small ships,1,100,100,100,generaluseequipment,alliance antigone argon holyorder ministry paranid teladi
-D,sh2mj,shield_par_s_standard_01_mk1_macro,small shield 2mj component unhittable,200,200,3.1,2MJ Shield,2MJ Shield,2MJ,2MJ Shield for small ships,1,200,200,200,generaluseequipment,alliance antigone argon holyorder ministry paranid teladi
-D,sh3mj,shield_par_s_standard_01_mk1_macro,small shield 3mj component unhittable,300,200,4.1,3MJ Shield,3MJ Shield,3MJ,3MJ Shield for small ships,1,300,300,300,generaluseequipment,alliance antigone argon holyorder ministry paranid teladi
-D,sh5mj,shield_par_s_standard_01_mk1_macro,small shield 5mj component unhittable,500,300,7.2,5MJ Shield,5MJ Shield,5MJ,5MJ Shield for small ships,1,500,500,500,generaluseequipment,alliance antigone argon holyorder ministry paranid teladi
-D,sh25mj,shield_par_s_standard_01_mk1_macro,small shield 25mj component unhittable,2500,800,10.2,25MJ Shield,25MJ Shield,25MJ,25MJ Shield for small ships,1,1200,1200,1200,generaluseequipment,alliance antigone argon holyorder ministry paranid teladi
