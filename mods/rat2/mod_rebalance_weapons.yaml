@@ -1,0 +1,147 @@
+## COMPONENTS (add/modify hardpoints and tags)
+
+
+weapon_*_s_*_mk2.xml:
+    # target all small size mk2 weapons
+    component/connections/connection@tags: 
+        # add mk2 tag to any connection with a tags field that contains "weapon" ie. <connection ... tags="weapon ...">
+        # note: only ship hardpoints/connections that have weapon mk2 in it's tags can now use this shield
+        - :?weapon +mk2
+
+
+## MACROS (add/modify properties)
+
+
+# make scout/mk1 bullets faster, but shorter range, lower damage, more heat
+macros/bullet_*_s_*_mk1_macro.xml:
+    macro/properties:
+        bullet@speed: "*1.2"
+        bullet@lifetime: "*0.7"
+        damage@value: "*0.9"
+        heat@value: "*1.5"
+
+
+# make destroyer ship weapons more powerful (to compete with Xenon Turrets)
+macros/bullet_[aps]??_l_laser_*_macro.xml:
+    macro/properties:
+        reload@time: "/1.5"
+        heat@value: "/1.5"
+
+
+# teladi destroyer ship weapons need even more boost
+macros/bullet_tel_l_laser_*_macro.xml:
+    macro/properties:
+        reload@time: "/2.5"
+        heat@value: "/2.5"
+
+
+# make medium turrets faster and up the damage a tad (should increase hit rate at the cost of damage amount)
+# note: turret macros control rotation speed and hull points
+# note: bullet macros control reload, damage, bullet speed, bullet lifetime, range=bullet speed*bullet lieftime
+
+macros/turret_*_m_*_macro.xml:
+    macro/properties:
+        rotationspeed@max: "*2"
+        hull@max: "*2"
+
+
+macros/bullet_*_turret_m_beam_*_macro.xml:
+    macro/properties:
+        reload@time: "*0.25"
+        reload@rate: "/0.25"
+        damage@value: "*0.5"
+
+
+macros/bullet_*_turret_m_laser_*_macro.xml:
+    macro/properties:
+        bullet@speed: "*2"
+        bullet@lifetime: "/2"
+        reload@time: "*0.25"
+        reload@rate: "/0.25"
+        damage@value: "*0.5"
+
+
+macros/bullet_*_turret_m_gatling_*_macro.xml:
+    macro/properties:
+        bullet@speed: "*2"
+        bullet@lifetime: "/2"
+        reload@time: "*0.5"
+        reload@rate: "/0.5"
+        damage@value: "*0.75"
+
+
+macros/bullet_*_turret_m_shotgun_*_macro.xml:
+    macro/properties:
+        bullet@speed: "*2"
+        bullet@lifetime: "/2"
+        reload@time: "*0.75"
+        reload@rate: "/0.75"
+
+
+macros/bullet_*_turret_m_plasma_*_macro.xml:
+    macro/properties:
+        bullet@speed: "*1.5"
+        bullet@lifetime: "/1.5"
+        reload@time: "*0.5"
+        reload@rate: "/0.5"
+        damage@value: "*0.75"
+
+
+macros/bullet_gen_m_flak_*_macro.xml:
+    # same as above, except flak bullets aren't labelled as turret bullets
+    macro/properties:
+        bullet@speed: "*2"
+        bullet@lifetime: "/2"
+        reload@time: "*0.75"
+        reload@rate: "/0.75"
+
+
+macros/turret_*_l_*_macro.xml:
+    macro/properties:
+        rotationspeed@max: "*2"
+
+
+macros/bullet_*_turret_m_beam_*_macro.xml:
+    macro/properties:
+        reload@time: "*0.5"
+        reload@rate: "/0.5"
+        damage@value: "*0.6"
+
+
+# targeting medium turrets
+macros/bullet_*_turret_m_laser_*_macro.xml:
+    macro/properties:
+        bullet@speed: "*1.5"
+        bullet@lifetime: "/1.5"
+        reload@time: "*0.5"
+        reload@rate: "/0.5"
+        damage@value: "*0.75"
+
+
+macros/bullet_*_turret_l_gatling_*_macro.xml:
+    macro/properties:
+        bullet@speed: "*1.5"
+        bullet@lifetime: "/1.5"
+        reload@time: "*0.5"
+        reload@rate: "/0.5"
+        damage@value: "*0.75"
+
+
+macros/bullet_*_turret_l_shotgun_*_macro.xml:
+    macro/properties:
+        bullet@speed: "*1.5"
+        bullet@lifetime: "/1.5"
+        reload@time: "*0.65"
+        reload@rate: "/0.65"
+        damage@value: "*0.75"
+
+
+macros/bullet_*_turret_l_plasma_*_macro.xml:
+    macro/properties:
+        bullet@speed: "*1.25"
+        bullet@lifetime: "/1.25"
+        reload@time: "*0.5"
+        reload@rate: "/0.5"
+        damage@value: "*0.75"
+
+

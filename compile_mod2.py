@@ -8,10 +8,6 @@ from lib.x4lib import get_config
 from xml.etree import ElementTree
 
 
-extracted_game_files_path = '/games/x4/'
-
-
-
 def modify_attrib_value(modifier, attrib_val):
     """
     modifier: 
@@ -72,10 +68,9 @@ def find_and_replace(xml, modifiers):
                 for val2 in val_list:
                     if attrib_val or val2.startswith('='):
                         el.attrib[attrib] = attrib_val = modify_attrib_value(modifier=val2, attrib_val=attrib_val)
-        elif pat.endswith('>>'):
+        elif pat.endswith('>APPEND>'):
             val_list = [val] if isinstance(val, str) else val 
-            pat2 = pat[:-2]
-            els = xml.findall(f'./{pat2}')
+            els = xml.findall(f'./{pat[:-8]}')
             for el in els:
                 for val2 in val_list:
                     if '*COCKPIT' in val2:
@@ -104,11 +99,10 @@ def write_xml(filename, xml):
     outstr = ElementTree.tostring(xml.getroot(), xml_declaration=True).replace(b'version=\'1.0\' encoding=\'us-ascii\'', b'version="1.0"').replace(b' />', b'/>')
     with open(filename, 'wb') as of:
         of.write(outstr)
-#        xml.write(of, encoding='utf-8', xml_declaration=True)
 
 
 
-def write_index_file(filepathname, entrie):    
+def write_index_file(filepathname, entries):    
     root = ElementTree.Element('diff')
     root.text = root.tail = '\n'
     add = ElementTree.Element('add', sel='/index')
@@ -122,44 +116,51 @@ def write_index_file(filepathname, entrie):
 
 
 
-def apply_yaml(yaml_data, path, mod_path):
+def apply_yaml(entries, yaml_data, src_path, mod_path):
     mod_name = mod_path.rsplit('/', 1)[-1]
-    entries = []
     for pat, modifiers in yaml_data.items():
         file_type = 'macros' if 'macro' in pat else f'components'
-        files = glob.glob(path+'**/'+pat, recursive=True)
+        files = glob.glob(src_path+'/**/'+pat, recursive=True)
         for filepathname in files:
-            if 'mods' in filepathname:
-                continue
             filename = filepathname.rsplit('/', 1)[-1]
             entry_name = filename.rsplit('.',1)[0]
             out_filename = f'{mod_path}/{file_type}/{filename}'
-            entries.append((entry_name, f'extensions\\{mod_name}\\{file_type}\\{entry_name}'))
+            entry = (entry_name, f'extensions\\{mod_name}\\{file_type}\\{entry_name}')
+            if entry in entries:
+                print(f'\t\t{filepathname} -> {out_filename}')
+                print("\t\t\tWarning: trying update the same file twice, currently this will discard whatever modification was applied earlier")
 
-            print(f'{filepathname} -> {out_filename}')
             xml = ElementTree.parse(filepathname)
             find_and_replace(xml, modifiers)
             write_xml(out_filename, xml)
+            entries.add(entry)
+            # print(f'\t\tAdding {filepathname} -> {out_filename}')
 
-    return entries
+        print(f'\tApplying pattern {pat:65}: {len(files):3} files matched')
 
 
 def compile_mod(src_path, mod_path):
+    entries = set()
     for cfg_filename in glob.glob(f'{mod_path}/mod_*.yaml'):
-        with open(cfg_filename) as cfg_file:
-            cfg = yaml.load(cfg_file)
-        entries.extend(apply_yaml(cfg, extracted_game_files_path, mod_path))
+       with open(cfg_filename) as cfg_file:
+            yaml_data = yaml.load(cfg_file)
+       print(f'Applying {cfg_filename}:')
+       apply_yaml(entries, yaml_data, src_path, mod_path)
+       print()
 
-    write_index_file(f'{mod_path}/index/macros.xml', (entry for entry in entries if 'macros' in entry[1]))
-    write_index_file(f'{mod_path}/index/components.xml', (entry for entry in entries if 'components' in entry[1]))
+    macros_list = [entry for entry in entries if 'macros' in entry[1]]
+    components_list = [entry for entry in entries if 'components' in entry[1]]
+
+    write_index_file(f'{mod_path}/index/macros.xml', macros_list)
+    write_index_file(f'{mod_path}/index/components.xml', components_list)
     
+    print (f'Compiled {len(macros_list)} macros, {len(components_list)} components')
         
 
 
 if __name__ == '__main__':
     args = sys.argv[1:]
     mod_path = os.getcwd()
-    entries = []
 
 
     args = sys.argv[1:]

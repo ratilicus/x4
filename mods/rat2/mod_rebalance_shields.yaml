@@ -1,0 +1,57 @@
+## COMPONENTS (add/modify hardpoints and tags)
+
+shield_*_s_standard_*_mk2.xml:
+    # target all small size mk2 shields
+    component/connections/connection@tags: 
+        # add mk2 tag to any connection with a tags field that contains "shield" ie. <connection ... tags="shield ...">
+        # note: only ship hardpoints/connections that have shield mk2 can now use this shield
+        - :?shield +mk2
+
+    
+shield_*_s_standard_*_mk3.xml:
+    # target all small size mk3 shields
+    component/connections/connection@tags: 
+        # add mk3 tag to any connection with a tags field that contains "shield" ie. <connection ... tags="shield ...">
+        # note: only ship hardpoints/connections that have shield mk3 in it's tags can now use this shield
+        - :?shield +mk3
+
+
+## MACROS (add/modify properties)
+
+# make scout/mk1 shields fast charge, but low max
+macros/shield_*_s_*_mk1_macro.xml:
+    macro/properties:
+        recharge@max: "/2"
+        recharge@rate: "*2"
+        recharge@delay: "/4"
+
+
+# decrease fighter shields recharge delay
+macros/shield_*_s_*_mk2_macro.xml:
+    macro/properties:
+        recharge@delay: "/2.5"
+
+
+macros/shield_*_s_*_mk3_macro.xml:
+    macro/properties:
+        recharge@delay: "/2"
+
+
+macros/shield_*_m_*_macro.xml:
+    macro/properties:
+        recharge@max: "*1.5"
+        recharge@rate: "*1.25"
+        recharge@delay: "*2"
+        hull@max: "*4"
+
+
+macros/shield_*_l_*_macro.xml:
+    macro/properties:
+        recharge@max: "*1.5"
+
+
+macros/shield_*_xl_*_macro.xml:
+    macro/properties:
+        recharge@max: "*1.2"
+
+

@@ -10,4 +10,6 @@ db
 .coverage
 config.py
 docker-compose.yml
-
+mods/rat2/index
+mods/rat2/macros
+mods/rat2/components
