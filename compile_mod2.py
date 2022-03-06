@@ -79,15 +79,29 @@ def find_and_replace(xml, modifiers):
                         y = float(cel.attrib["y"])
                         z = float(cel.attrib["z"])
                         if '*COCKPIT-TOP*' in val2:
-                            val2 = val2.replace('*COCKPIT-TOP*', f'x="{x}" y="{y+1.5}" z="{z-5}"')
+                            val2 = val2.replace('*COCKPIT-TOP*', f'x="{x}" y="{y+2}" z="{z-2}"')
                         if '*COCKPIT-BOTTOM*' in val2:
                             val2 = val2.replace('*COCKPIT-BOTTOM*', f'x="{x}" y="{y-2.5}" z="{z-5}"')
                         if '*COCKPIT-LEFT*' in val2:
-                            val2 = val2.replace('*COCKPIT-LEFT*', f'x="{x-2.5}" y="{y}" z="{z-4}"')
+                            val2 = val2.replace('*COCKPIT-LEFT*', f'x="{x-2.25}" y="{y+1.75}" z="{z-5}"')
                         if '*COCKPIT-RIGHT*' in val2:
-                            val2 = val2.replace('*COCKPIT-RIGHT*', f'x="{x+2.5}" y="{y}" z="{z-4}"')
+                            val2 = val2.replace('*COCKPIT-RIGHT*', f'x="{x+2.25}" y="{y+1.75}" z="{z-5}"')
                     new_el = ElementTree.fromstring(val2)
+                    new_el.tail = '\n'
                     el.append(new_el)
+
+        elif '>CLONE>' in pat:
+            pat, src_el_pat = pat.split('>CLONE>', 1)
+            el = xml.find(f'./{pat}')
+            src_el = el.find(f'./{src_el_pat}')
+            if not src_el:
+                print(f'Err: not found {pat} | {src_el_pat}')
+            else:
+                new_el = ElementTree.fromstring(ElementTree.tostring(src_el))
+                new_el.attrib.update(val)
+                new_el.tail = '\n'
+                el.append(new_el)
+            
         else:        
             elements = xml.findall(f'./{pat}')
             for el in elements:
@@ -139,14 +153,16 @@ def apply_yaml(entries, yaml_data, src_path, mod_path):
         print(f'\tApplying pattern {pat:65}: {len(files):3} files matched')
 
 
-def compile_mod(src_path, mod_path):
+def compile_mod(src_path, mod_path, pat):
     entries = set()
     for cfg_filename in glob.glob(f'{mod_path}/mod_*.yaml'):
-       with open(cfg_filename) as cfg_file:
+        if pat and pat not in cfg_filename:
+            continue
+        with open(cfg_filename) as cfg_file:
             yaml_data = yaml.load(cfg_file)
-       print(f'Applying {cfg_filename}:')
-       apply_yaml(entries, yaml_data, src_path, mod_path)
-       print()
+        print(f'Applying {cfg_filename}:')
+        apply_yaml(entries, yaml_data, src_path, mod_path)
+        print()
 
     macros_list = [entry for entry in entries if 'macros' in entry[1]]
     components_list = [entry for entry in entries if 'components' in entry[1]]
@@ -168,8 +184,9 @@ if __name__ == '__main__':
         logger.info("%s <mod_name>", sys.argv[0])
     else:
         mod_name=args[0]
+        pat = args[1] if len(args)>1 else None
         config=get_config()
-        compile_mod(src_path=config.SRC, mod_path=f'{config.MODS}/{mod_name}')
+        compile_mod(src_path=config.SRC, mod_path=f'{config.MODS}/{mod_name}', pat=pat)
 
 
 

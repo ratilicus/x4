@@ -34,8 +34,10 @@ size_s/ship_*_s_*fighter_*.xml:
         # add a missile hardpoint, a weapon hardpoint, and an extra shield hardpoint
         - <connection name="con_xta_weapon_01" tags="weapon small missile mk2"><offset><position *COCKPIT-LEFT*/></offset></connection>
         - <connection name="con_xta_weapon_02" tags="weapon small missile standard mk2"><offset><position *COCKPIT-RIGHT*/></offset></connection>
-        - <connection name="con_xtra_shield_01" tags="small shield unhittable mk2 mk3"><offset><position x="0" y="1.5" z="-4"/></offset></connection>
 
+    component/connections>CLONE>connection[@name="con_shield_01"]:
+        name: con_xtra_shield_01
+    
 
 # add extra shields to larger combat ships
 size_m/ship_*_m_*.xml:
