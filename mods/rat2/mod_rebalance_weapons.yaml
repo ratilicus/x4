@@ -3,10 +3,9 @@
 
 weapon_*_s_*_mk2.xml:
     # target all small size mk2 weapons
-    component/connections/connection@tags: 
-        # add mk2 tag to any connection with a tags field that contains "weapon" ie. <connection ... tags="weapon ...">
-        # note: only ship hardpoints/connections that have weapon mk2 in it's tags can now use this shield
-        - :?weapon +mk2
+    # add mk2 tag to any connection with a tags field that contains "weapon" ie. <connection ... tags="weapon ...">
+    # note: only ship hardpoints/connections that have weapon mk2 in it's tags can now use this shield
+    component/connections/connection[@tags="[small weapon]"]@tags: "[+mk2]"
 
 
 ## MACROS (add/modify properties)

@@ -2,18 +2,15 @@
 
 shield_*_s_standard_*_mk2.xml:
     # target all small size mk2 shields
-    component/connections/connection@tags: 
-        # add mk2 tag to any connection with a tags field that contains "shield" ie. <connection ... tags="shield ...">
-        # note: only ship hardpoints/connections that have shield mk2 can now use this shield
-        - :?shield +mk2
-
+    # add mk2 tag to any connection with a tags field that contains "shield" ie. <connection ... tags="shield ...">
+    # note: only ship hardpoints/connections that have shield mk2 can now use this shield
+    component/connections/connection[@tags="[small shield]"]@tags: "[+mk2]"
     
 shield_*_s_standard_*_mk3.xml:
     # target all small size mk3 shields
-    component/connections/connection@tags: 
-        # add mk3 tag to any connection with a tags field that contains "shield" ie. <connection ... tags="shield ...">
-        # note: only ship hardpoints/connections that have shield mk3 in it's tags can now use this shield
-        - :?shield +mk3
+    # add mk3 tag to any connection with a tags field that contains "shield" ie. <connection ... tags="shield ...">
+    # note: only ship hardpoints/connections that have shield mk3 in it's tags can now use this shield
+    component/connections/connection[@tags="[small shield]"]@tags: "[+mk3]"
 
 
 ## MACROS (add/modify properties)
