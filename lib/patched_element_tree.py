@@ -1,6 +1,6 @@
 import re
 from xml.etree import ElementTree
-
+from xml.etree import ElementPath
 """
 This patches ElementTree so that the find(all) functions allow 
 for regex based attribute value searches 
@@ -109,7 +109,7 @@ def prepare_predicate(next, token):
             else:
                 index = -1
         def select(context, result):
-            parent_map = get_parent_map(context)
+            parent_map = ElementPath.get_parent_map(context)
             for elem in result:
                 try:
                     parent = parent_map[elem]

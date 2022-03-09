@@ -75,37 +75,20 @@ def find_and_replace(xml, modifiers):
                         if attrib_val or val2.startswith('='):
                             el.attrib[attrib] = attrib_val = modify_attrib_value(modifier=val2, attrib_val=attrib_val)
 
-            elif pat == APPEND_PAT:
-                val_list = [val] if isinstance(val, str) else val 
-                for val2 in val_list:
-                    if '*COCKPIT' in val2:
-                        cel = xml.find('./connection[@name="con_cockpit"]/offset/position')
-                        x = float(cel.attrib["x"])
-                        y = float(cel.attrib["y"])
-                        z = float(cel.attrib["z"])
-                        if '*COCKPIT-TOP*' in val2:
-                            val2 = val2.replace('*COCKPIT-TOP*', f'x="{x}" y="{y+2}" z="{z-2}"')
-                        if '*COCKPIT-BOTTOM*' in val2:
-                            val2 = val2.replace('*COCKPIT-BOTTOM*', f'x="{x}" y="{y-2.5}" z="{z-5}"')
-                        if '*COCKPIT-LEFT*' in val2:
-                            val2 = val2.replace('*COCKPIT-LEFT*', f'x="{x-2.25}" y="{y+1.75}" z="{z-5}"')
-                        if '*COCKPIT-RIGHT*' in val2:
-                            val2 = val2.replace('*COCKPIT-RIGHT*', f'x="{x+2.25}" y="{y+1.75}" z="{z-5}"')
-                    new_el = ElementTree.fromstring(val2)
-                    new_el.tail = '\n'
-                    xml.append(new_el)
-
             elif pat == CLONE_PAT:
                 val_list = val if isinstance(val, list) else [val]
                 for clone_entry in val_list:
-                    for src_el_pat, modifiers in clone_entry.items():
-                        src_el = xml.find(f'./{src_el_pat}')  # we are only finding the first element that matches
-                        if not src_el:
+                    for src_el_pat, clone_modifiers in clone_entry.items():
+                        src_els = xml.findall(f'./{src_el_pat}')
+                        if not src_els:
                             name = xml.find('./*[@name]').get('name')
                             print(f'Warning: not found {pat} for pat {src_el_pat} in {name}')
-                        else:
+                            continue
+
+                        clone_modifiers_list = clone_modifiers if isinstance(clone_modifiers, list) else [clone_modifiers]
+                        for src_el, clone_modifiers in zip(src_els, clone_modifiers_list):
                             new_el = ElementTree.fromstring(ElementTree.tostring(src_el))
-                            find_and_replace(new_el, modifiers)
+                            find_and_replace(new_el, clone_modifiers)
                             new_el.tail = '\n'
                             xml.append(new_el)
                 

@@ -30,14 +30,24 @@
     - component/connections/connection[@tags="[small weapon]"]@tags: "[+mk2]"
 
     - component/connections:
-        APPEND:
-            # add a missile hardpoint, a weapon hardpoint, and an extra shield hardpoint
-            - <connection name="con_xta_weapon_01" tags="weapon small missile mk2"><offset><position *COCKPIT-LEFT*/></offset></connection>
-            - <connection name="con_xta_weapon_02" tags="weapon small missile standard mk2"><offset><position *COCKPIT-RIGHT*/></offset></connection>
 
         CLONE:
             - connection[@tags="[small shield]"]:
                 .@name: "=con_xtra_shield_01"
+                .@tags: "[-mk3]"
+                offset/position@x: "+1"
+
+            - connection[@tags="[small shield]"]:
+                .@name: "=con_xtra_shield_02"
+                .@tags: "[-mk3]"
+                offset/position@x: "-1"
+    
+            - connection[@tags="[small weapon]"]:
+                - .@name: "=con_xtra_weapon_01"
+                  offset/position@y: "+1"
+
+                - .@name: "=con_xtra_weapon_02"
+                  offset/position@y: "+1"
     
 
 # add extra shields to larger combat ships
@@ -48,6 +58,52 @@
             - connection[@tags="[medium shield]"]:
                 .@name: "=con_xtra_shield_01"
 
+            - connection[@tags="[medium weapon]"]:
+                - .@name: "=con_xtra_weapon_01"
+                  .@tags: "[-medium +small]"
+                  offset/position@y: "+5"
+
+                - .@name: "=con_xtra_weapon_02"
+                  .@tags: "[-medium +small]"
+                  offset/position@y: "+5"
+
+                - .@name: "=con_xtra_weapon_03"
+                  .@tags: "[-medium +small]"
+                  offset/position@y: "+5"
+
+                - .@name: "=con_xtra_weapon_04"
+                  .@tags: "[-medium +small]"
+                  offset/position@y: "+5"
+
+
+# add extra shields to larger combat ships
+- size_m/ship_*_m_frigate*.xml:
+    # target all medium size ships (frigates)
+    component/connections:
+        CLONE:
+            - connection[@tags="[medium shield]"]:
+                .@name: "=con_xtra_shield_01"
+                offset/position/@x: "+2"
+            - connection[@tags="[medium shield]"]:
+                .@name: "=con_xtra_shield_02"
+                offset/position/@x: "-2"
+
+            - connection[@tags="[medium weapon]"]:
+                - .@name: "=con_xtra_weapon_01"
+                  .@tags: "[-medium +small]"
+                  offset/position@y: "+2"
+
+                - .@name: "=con_xtra_weapon_02"
+                  .@tags: "[-medium +small]"
+                  offset/position@y: "+2"
+
+                - .@name: "=con_xtra_weapon_03"
+                  .@tags: "[-medium +small]"
+                  offset/position@y: "+2"
+
+                - .@name: "=con_xtra_weapon_04"
+                  .@tags: "[-medium +small]"
+                  offset/position@y: "+2"
 
 - size_l/ship_*_l_destroyer_*.xml:
     # target all destroyer ships
@@ -56,12 +112,44 @@
             - connection[@tags="[large shield]"]:
                 .@name: "=con_xtra_shield_01"
 
+
+            - connection[@tags="[large turret]"]:
+                - .@name: "=con_xtra_m_turret_01"
+                  .@tags: "[-large +medium]"
+
+                - .@name: "=con_xtra_m_turret_02"
+                  .@tags: "[-large +medium]"
+
+                - .@name: "=con_xtra_m_turret_03"
+                  .@tags: "[-large +medium]"
+
+                - .@name: "=con_xtra_m_turret_04"
+                  .@tags: "[-large +medium]"
+
+                - .@name: "=con_xtra_m_turret_05"
+                  .@tags: "[-large +medium]"
+
+                - .@name: "=con_xtra_m_turret_06"
+                  .@tags: "[-large +medium]"
+
+                - .@name: "=con_xtra_m_turret_07"
+                  .@tags: "[-large +medium]"
+
+                - .@name: "=con_xtra_m_turret_08"
+                  .@tags: "[-large +medium]"
+
+
 - size_xl/ship_*_xl_carrier_*.xml:
     # target carriers
     component/connections:
         CLONE:
             - connection[@tags="[extralarge shield]"]:
                 .@name: "=con_xtra_shield_01"
+                .@tags: "[-extralarge +large]"
+                
+            - connection[@tags="[extralarge shield]"]:
+                .@name: "=con_xtra_shield_02"
+                .@tags: "[-extralarge +large]"
 
 - size_xl/ship_*_xl_resupplier_*.xml:
     # target resuppliers
@@ -69,6 +157,7 @@
         CLONE:
             connection[@tags="[extralarge shield]"]:
                 .@name: "=con_xtra_shield_01"
+                .@tags: "[-extralarge +large]"
 
 
 ## MACROS (add/modify properties)
