@@ -7,6 +7,8 @@ import glob
 import re
 from lib.x4lib import get_config
 from lib.patched_element_tree import ElementTree
+import itertools
+
 
 def modify_attrib_value(modifier, attrib_val):
     """
@@ -60,12 +62,27 @@ APPEND_PAT = "APPEND"
 CLONE_PAT = "CLONE"
 
 
-def find_and_replace(xml, modifiers):
+
+def clone_els_iter(src_els, clone_modifiers, loop):
+    clone_modifiers_iter = itertools.cycle(clone_modifiers if isinstance(clone_modifiers, list) else [clone_modifiers])
+    for src_el in (itertools.cycle(src_els) if loop else src_els):
+        clone_modifiers = next(clone_modifiers_iter)
+        yield src_el, clone_modifiers        
+
+
+def clone_el(src_el, clone_modifiers, kwargs):
+    new_el = ElementTree.fromstring(ElementTree.tostring(src_el))
+    find_and_replace(new_el, clone_modifiers, kwargs)
+    new_el.tail = '\n'
+    return new_el
+
+
+def find_and_replace(xml, modifiers, kwargs={}):
     modifiers_list = modifiers if isinstance(modifiers, list) else [modifiers]
     for modifiers in modifiers_list:
         for pat, val in modifiers.items():
             if re.match(r'.*\@[a-z0-9]+$', pat):
-                # pat ends with @attr
+                # modify an attribute
                 val_list = [val] if isinstance(val, str) else val 
                 pat2, attrib = pat.rsplit('@', 1)
                 els = xml.findall(f'./{pat2}')
@@ -73,29 +90,40 @@ def find_and_replace(xml, modifiers):
                     attrib_val = el.attrib.get(attrib, None)
                     for val2 in val_list:
                         if attrib_val or val2.startswith('='):
-                            el.attrib[attrib] = attrib_val = modify_attrib_value(modifier=val2, attrib_val=attrib_val)
+                            el.attrib[attrib] = attrib_val = modify_attrib_value(modifier=val2.format(**kwargs), attrib_val=attrib_val)
 
-            elif pat == CLONE_PAT:
-                val_list = val if isinstance(val, list) else [val]
-                for clone_entry in val_list:
-                    for src_el_pat, clone_modifiers in clone_entry.items():
+            elif pat.startswith(CLONE_PAT):
+                # clone and alter an element
+                clone_limit = int(pat.rsplit('-', 1)[-1]) if '-' in pat else None
+                clone_count = 0
+                clone_iter_list = []
+                clone_iter_exhausted = 0
+            
+                clone_pat_list = val if isinstance(val, list) else [val]
+                for clone_pat_entry in clone_pat_list:
+                    for src_el_pat, clone_modifiers in clone_pat_entry.items():
                         src_els = xml.findall(f'./{src_el_pat}')
-                        if not src_els:
-                            name = xml.find('./*[@name]').get('name')
-                            print(f'Warning: not found {pat} for pat {src_el_pat} in {name}')
-                            continue
+                        if src_els:
+                            clone_iter_list.append(clone_els_iter(src_els, clone_modifiers, loop=clone_limit))
+                       
+                while clone_iter_exhausted < len(clone_iter_list):
+                    for clone_iter in clone_iter_list:
+                        if clone_limit is not None and clone_count >= clone_limit:
+                            clone_iter_exhausted = 999
+                            break
 
-                        clone_modifiers_list = clone_modifiers if isinstance(clone_modifiers, list) else [clone_modifiers]
-                        for src_el, clone_modifiers in zip(src_els, clone_modifiers_list):
-                            new_el = ElementTree.fromstring(ElementTree.tostring(src_el))
-                            find_and_replace(new_el, clone_modifiers)
-                            new_el.tail = '\n'
-                            xml.append(new_el)
+                        src_el, clone_modifiers = next(clone_iter, (None, None))
+                        if src_el:
+                            clone_count +=1
+                            xml.append(clone_el(src_el, clone_modifiers, {"i": clone_count}))
+                        else: 
+                            clone_iter_exhausted += 1
                 
-            else:        
+            else:
+                # follow nested modifier patterns
                 elements = xml.findall(f'./{pat}')
                 for el in elements:
-                    find_and_replace(el, val)
+                    find_and_replace(el, val, kwargs)
 
 
 def write_xml(filename, xml):
@@ -103,7 +131,6 @@ def write_xml(filename, xml):
     outstr = ElementTree.tostring(xml.getroot(), xml_declaration=True).replace(b'version=\'1.0\' encoding=\'us-ascii\'', b'version="1.0"').replace(b' />', b'/>')
     with open(filename, 'wb') as of:
         of.write(outstr)
-
 
 
 def write_index_file(filepathname, entries):    
@@ -117,7 +144,6 @@ def write_index_file(filepathname, entries):
         entry.tail = '\n'
         add.append(entry)
     write_xml(filepathname, ElementTree.ElementTree(root))
-
 
 
 def apply_yaml(entries, yaml_data, src_path, mod_path):
@@ -165,7 +191,6 @@ def compile_mod(src_path, mod_path, pat):
     
     print (f'Compiled {len(macros_list)} macros, {len(components_list)} components')
         
-
 
 if __name__ == '__main__':
     args = sys.argv[1:]

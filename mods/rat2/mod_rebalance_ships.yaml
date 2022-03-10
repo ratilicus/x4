@@ -27,136 +27,132 @@
     # add mk2 and mk3 tags to weapon and shield connections/hardpoints ie. <connection ... tags="weapon ...">
     # note: we added this to fighters, but not to scouts, so scouts are no longer able to user mk2/mk3 weapons and shields
     - component/connections/connection[@tags="[small shield]"]@tags: "[+mk2 +mk3]"
-    - component/connections/connection[@tags="[small weapon]"]@tags: "[+mk2]"
+    - component/connections/connection[@tags="[small weapon]"]@tags: "[+mk2 -missile]"
 
     - component/connections:
 
-        CLONE:
+        - CLONE-2:
             - connection[@tags="[small shield]"]:
-                .@name: "=con_xtra_shield_01"
-                .@tags: "[-mk3]"
-                offset/position@x: "+1"
+                - .@name: "=con_xtra_shield_{i:02}a"
+                  .@tags: "[-mk3]"
+                  offset/position@x: "-1"
 
-            - connection[@tags="[small shield]"]:
-                .@name: "=con_xtra_shield_02"
-                .@tags: "[-mk3]"
-                offset/position@x: "-1"
+                - .@name: "=con_xtra_shield_{i:02}b"
+                  .@tags: "[-mk3]"
+                  offset/position@x: "+1"
+    
+        - CLONE-2:
+            - connection[@tags="[small weapon symmetry_right]"]:
+                - .@name: "=con_xtra_weapon_{i:02}"
+                  offset/position@y: "+1"
+                  .@tags: "[-symmetry -symmetry_1 -symmetry_2 -symmetry_left -symmetry_right -symmetry_top -symmetry_bottom -standard +missile]"
+
+            - connection[@tags="[small weapon symmetry_left]"]:
+                - .@name: "=con_xtra_weapon_{i:02}"
+                  offset/position@y: "+1"
+                  .@tags: "[-symmetry -symmetry_1 -symmetry_2 -symmetry_left -symmetry_right -symmetry_top -symmetry_bottom -standard +missile]"
     
             - connection[@tags="[small weapon]"]:
-                - .@name: "=con_xtra_weapon_01"
+                - .@name: "=con_xtra_weapon_{i:02}"
                   offset/position@y: "+1"
+                  .@tags: "[-symmetry -symmetry_1 -symmetry_2 -symmetry_left -symmetry_right -symmetry_top -symmetry_bottom -standard +missile]"
 
-                - .@name: "=con_xtra_weapon_02"
-                  offset/position@y: "+1"
-    
 
 # add extra shields to larger combat ships
 - size_m/ship_*_m_*.xml:
     # target all medium size ships (corvettes, bombers, gunboats, frigates, transports)
     component/connections:
-        CLONE:
+        - CLONE-2:
             - connection[@tags="[medium shield]"]:
-                .@name: "=con_xtra_shield_01"
+                - .@name: "=con_xtra_shield_{i:02}"
 
+
+# add extra shields to larger combat ships
+- size_m/ship_*_m_corvette*.xml:
+    # target all medium size ships (corvettes, bombers, gunboats, frigates, transports)
+    component/connections:
+        - component/connections/connection[@tags="[medium weapon]"]@tags: "[-missile]"
+
+        - CLONE-2:
+            - connection[@tags="[medium shield]"]:
+                - .@name: "=con_xtra_shield_{i:02}"
+
+        - CLONE-2:
+            - connection[@tags="[medium weapon symmetry_right]"]:
+                - .@name: "=con_xtra_weapon_{i:02}"
+                  offset/position@y: "+3"
+                  .@tags: "[-symmetry -symmetry_1 -symmetry_2 -symmetry_left -symmetry_right -symmetry_top -symmetry_bottom -standard +missile]"
+
+            - connection[@tags="[medium weapon symmetry_left]"]:
+                - .@name: "=con_xtra_weapon_{i:02}"
+                  offset/position@y: "+3"
+                  .@tags: "[-symmetry -symmetry_1 -symmetry_2 -symmetry_left -symmetry_right -symmetry_top -symmetry_bottom -standard +missile]"
+    
             - connection[@tags="[medium weapon]"]:
-                - .@name: "=con_xtra_weapon_01"
-                  .@tags: "[-medium +small]"
-                  offset/position@y: "+5"
-
-                - .@name: "=con_xtra_weapon_02"
-                  .@tags: "[-medium +small]"
-                  offset/position@y: "+5"
-
-                - .@name: "=con_xtra_weapon_03"
-                  .@tags: "[-medium +small]"
-                  offset/position@y: "+5"
-
-                - .@name: "=con_xtra_weapon_04"
-                  .@tags: "[-medium +small]"
-                  offset/position@y: "+5"
+                - .@name: "=con_xtra_weapon_{i:02}"
+                  offset/position@y: "+3"
+                  .@tags: "[-symmetry -symmetry_1 -symmetry_2 -symmetry_left -symmetry_right -symmetry_top -symmetry_bottom -standard +missile]"
 
 
 # add extra shields to larger combat ships
 - size_m/ship_*_m_frigate*.xml:
-    # target all medium size ships (frigates)
+    # target all medium size ships (corvettes, bombers, gunboats, frigates, transports)
     component/connections:
-        CLONE:
-            - connection[@tags="[medium shield]"]:
-                .@name: "=con_xtra_shield_01"
-                offset/position/@x: "+2"
-            - connection[@tags="[medium shield]"]:
-                .@name: "=con_xtra_shield_02"
-                offset/position/@x: "-2"
 
+        - CLONE-3:
+            - connection[@tags="[medium shield]"]:
+                - .@name: "=con_xtra_shield_{i:02}a"
+
+        - CLONE-2:
+            - connection[@tags="[medium weapon symmetry_right]"]:
+                - .@name: "=con_xtra_weapon_{i:02}"
+                  offset/position@y: "+3"
+                  .@tags: "[-symmetry -symmetry_1 -symmetry_2 -symmetry_left -symmetry_right -symmetry_top -symmetry_bottom -standard +missile]"
+
+            - connection[@tags="[medium weapon symmetry_left]"]:
+                - .@name: "=con_xtra_weapon_{i:02}"
+                  offset/position@y: "+3"
+                  .@tags: "[-symmetry -symmetry_1 -symmetry_2 -symmetry_left -symmetry_right -symmetry_top -symmetry_bottom -standard +missile]"
+    
             - connection[@tags="[medium weapon]"]:
-                - .@name: "=con_xtra_weapon_01"
-                  .@tags: "[-medium +small]"
-                  offset/position@y: "+2"
+                - .@name: "=con_xtra_weapon_{i:02}"
+                  offset/position@y: "+3"
+                  .@tags: "[-symmetry -symmetry_1 -symmetry_2 -symmetry_left -symmetry_right -symmetry_top -symmetry_bottom -standard +missile]"
 
-                - .@name: "=con_xtra_weapon_02"
-                  .@tags: "[-medium +small]"
-                  offset/position@y: "+2"
-
-                - .@name: "=con_xtra_weapon_03"
-                  .@tags: "[-medium +small]"
-                  offset/position@y: "+2"
-
-                - .@name: "=con_xtra_weapon_04"
-                  .@tags: "[-medium +small]"
-                  offset/position@y: "+2"
 
 - size_l/ship_*_l_destroyer_*.xml:
     # target all destroyer ships
     component/connections:
-        CLONE:
+        - CLONE-1:
             - connection[@tags="[large shield]"]:
-                .@name: "=con_xtra_shield_01"
+                .@name: "=con_xtra_shield_{i:02}"
 
-
-            - connection[@tags="[large turret]"]:
-                - .@name: "=con_xtra_m_turret_01"
-                  .@tags: "[-large +medium]"
-
-                - .@name: "=con_xtra_m_turret_02"
-                  .@tags: "[-large +medium]"
-
-                - .@name: "=con_xtra_m_turret_03"
-                  .@tags: "[-large +medium]"
-
-                - .@name: "=con_xtra_m_turret_04"
-                  .@tags: "[-large +medium]"
-
-                - .@name: "=con_xtra_m_turret_05"
-                  .@tags: "[-large +medium]"
-
-                - .@name: "=con_xtra_m_turret_06"
-                  .@tags: "[-large +medium]"
-
-                - .@name: "=con_xtra_m_turret_07"
-                  .@tags: "[-large +medium]"
-
-                - .@name: "=con_xtra_m_turret_08"
-                  .@tags: "[-large +medium]"
+        - CLONE:
+            - connection[@tags="[medium turret]"]:
+                - .@name: "=con_xtra_m_turret_{i:02}"
+                  .@tags: "[-missile]"
 
 
 - size_xl/ship_*_xl_carrier_*.xml:
     # target carriers
     component/connections:
-        CLONE:
+        - CLONE-2:
             - connection[@tags="[extralarge shield]"]:
-                .@name: "=con_xtra_shield_01"
+                .@name: "=con_xtra_shield_{i:02}"
                 .@tags: "[-extralarge +large]"
-                
-            - connection[@tags="[extralarge shield]"]:
-                .@name: "=con_xtra_shield_02"
-                .@tags: "[-extralarge +large]"
+
+        - CLONE:
+            - connection[@tags="[medium turret]"]:
+                - .@name: "=con_xtra_m_turret_{i:02}"
+                  .@tags: "[-missile]"
+
 
 - size_xl/ship_*_xl_resupplier_*.xml:
     # target resuppliers
     component/connections:
-        CLONE:
+        - CLONE-1:
             connection[@tags="[extralarge shield]"]:
-                .@name: "=con_xtra_shield_01"
+                .@name: "=con_xtra_shield_{i:02}"
                 .@tags: "[-extralarge +large]"
 
 
