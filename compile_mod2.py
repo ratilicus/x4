@@ -8,6 +8,9 @@ import re
 from lib.x4lib import get_config
 from lib.patched_element_tree import ElementTree
 import itertools
+import logging
+
+logger = logging.getLogger('x4.' + __name__)
 
 
 def modify_attrib_value(modifier, attrib_val):
@@ -193,18 +196,18 @@ def compile_mod(src_path, mod_path, pat):
         
 
 if __name__ == '__main__':
-    args = sys.argv[1:]
-    mod_path = os.getcwd()
-
+    logger.addHandler(logging.StreamHandler())
+    logger.setLevel(logging.INFO)
 
     args = sys.argv[1:]
     if len(args) < 1:
         logger.info("%s <mod_name>", sys.argv[0])
-    else:
-        mod_name=args[0]
-        pat = args[1] if len(args)>1 else None
-        config=get_config()
-        compile_mod(src_path=config.SRC, mod_path=f'{config.MODS}/{mod_name}', pat=pat)
+        exit(0)
+
+    mod_name=args[0]
+    pat = args[1] if len(args)>1 else None
+    config=get_config()
+    compile_mod(src_path=config.SRC, mod_path=f'{config.MODS}/{mod_name}', pat=pat)
 
 
 

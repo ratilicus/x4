@@ -46,7 +46,7 @@ eg. ego_dlc_terran libraries/wares.xml
 
 
 
-def patch_xml(base_xml, patch_xml):
+def patch(base_xml, patch_xml):
     base = base_xml.getroot()
     base_tag = base.tag
     for add_el in patch_xml.findall('./add'):
@@ -66,7 +66,6 @@ def patch_xml(base_xml, patch_xml):
             else:
                 print(f'Element {sel} not found!')
                 break
-        print(f'Add {sel}')
         for add_el_child in add_el.findall('./*'):
             base_el.append(add_el_child)
 
